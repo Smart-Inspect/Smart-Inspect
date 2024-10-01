@@ -22,18 +22,7 @@ export default function HomeScreen() {
   };
 
   useEffect(() => {
-    const fetchServerStatus = async () => {
-      try {
-        const response = await fetch('/api');
-        const data = await response.json();
-        setServerStatus(data.status);
-      } catch (error) {
-        console.error('Error fetching server status:', error);
-        setServerStatus('Error');
-      }
-    };
-
-    fetchServerStatus();
+    checkAPI();
   }, []);
 
   return (
