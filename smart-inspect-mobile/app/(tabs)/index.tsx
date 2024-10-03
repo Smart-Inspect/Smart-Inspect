@@ -6,13 +6,15 @@ import ParallaxScrollView from '@/components/ParallaxScrollView';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 
+import { ENV } from '@/utils/env.config';
+
 export default function HomeScreen() {
 
   const [serverStatus, setServerStatus] = useState<string | null>(null);
 
   const checkAPI = async () => {
     try {
-      const response = await fetch('http://localhost:3000/api');
+      const response = await fetch(`${ENV.API_URL}/api`);
       const data = await response.json();
       setServerStatus(data.status);
     } catch (error) {
