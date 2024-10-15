@@ -21,3 +21,5 @@ expo-env.d.ts
 
 .env.development
 .env.production
+env.development
+env.production
