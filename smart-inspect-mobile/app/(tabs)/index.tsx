@@ -6,7 +6,7 @@ import ParallaxScrollView from '@/components/ParallaxScrollView';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 
-import { ENV } from '@/utils/env.config';
+import { ENV } from '@/utils/env';
 
 export default function HomeScreen() {
 
@@ -14,9 +14,10 @@ export default function HomeScreen() {
 
   const checkAPI = async () => {
     try {
-      const response = await fetch(`${ENV.API_URL}/api`);
-      const data = await response.json();
-      setServerStatus(data.status);
+      //const response = await fetch(`${ENV.API_URL}/api`);
+      //const data = await response.json();
+      //setServerStatus(data.status);
+      setServerStatus('Connected');
     } catch (error) {
       console.error('Error fetching server status:', error);
       setServerStatus('Error');
@@ -27,7 +28,7 @@ export default function HomeScreen() {
     checkAPI();
   }, []);
 
-  return (
+  /*return (
     <ParallaxScrollView
       headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
       headerImage={
@@ -67,9 +68,7 @@ export default function HomeScreen() {
           <ThemedText type="defaultSemiBold">app-example</ThemedText>.
         </ThemedText>
       </ThemedView>
-      <br />
-      <br />
-      <br />
+
       <ThemedView style={styles.stepContainer}>
         <ThemedText type="subtitle">SERVER CONNECTION STATUS</ThemedText>
         <ThemedText>
@@ -77,7 +76,7 @@ export default function HomeScreen() {
         </ThemedText>
       </ThemedView>
     </ParallaxScrollView>
-  );
+  );*/
 }
 
 const styles = StyleSheet.create({

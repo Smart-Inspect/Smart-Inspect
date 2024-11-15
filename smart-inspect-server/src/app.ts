@@ -1,11 +1,15 @@
 import express, { Request, Response } from 'express';
-import database from './config/db';
-import users from './routes/usersRoute';
 import dotenv from 'dotenv';
+import cookieParser from 'cookie-parser';
+import database from './config/db';
+import usersRoute from './routes/usersRoute';
+import refreshRoute from './routes/refreshRoute';
+
+export const BUILD_TYPE = process.env.NODE_ENV === 'production' ? 'production' : 'development';
 
 async function main() {
 	dotenv.config({
-		path: process.env.NODE_ENV === 'production' ? '.env.production' : '.env.development'
+		path: BUILD_TYPE === 'production' ? '.env.production' : '.env.development'
 	});
 
 	const app = express();
@@ -13,7 +17,7 @@ async function main() {
 
 	// Middleware
 	app.use(express.json());
-	// TODO: ADD AUTHENTICATION
+	app.use(cookieParser());
 
 	// Database Connection
 	database.connect();
@@ -30,7 +34,8 @@ async function main() {
 	});
 
 	// Routes
-	app.use('/api/users', users);
+	app.use('/api/refresh', refreshRoute);
+	app.use('/api/users', usersRoute);
 
 	app.listen(PORT, () => {
 		console.log(`Server is running on http://localhost:${PORT}`);

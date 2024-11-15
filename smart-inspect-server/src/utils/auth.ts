@@ -1,10 +1,13 @@
 import jwt from 'jsonwebtoken';
+import dotenv from 'dotenv';
 
-const jwtAccessSecret = Buffer.from(crypto.getRandomValues(new Uint8Array(64)));
-const jwtRefreshSecret = Buffer.from(crypto.getRandomValues(new Uint8Array(64)));
+dotenv.config();
+
+const jwtAccessSecret = process.env.ACCESS_TOKEN_SECRET as string;
+const jwtRefreshSecret = process.env.REFRESH_TOKEN_SECRET as string;
 
 const auth = {
-	generateToken: (payload: object, type: 'access' | 'refresh' = 'access') => {
+	generateToken: (payload: object, type: 'access' | 'refresh' = 'access'): string => {
 		const secret = type === 'refresh' ? jwtRefreshSecret : jwtAccessSecret;
 		const expiresIn = type === 'refresh' ? '1yr' : '1h';
 		return jwt.sign(payload, secret, { expiresIn });
@@ -18,7 +21,7 @@ const auth = {
 			return false;
 		}
 	},
-	getPayload: (token: string, type: 'access' | 'refresh' = 'access'): unknown => {
+	getPayload: (token: string, type: 'access' | 'refresh' = 'access'): jwt.JwtPayload | string => {
 		const secret = type === 'refresh' ? jwtRefreshSecret : jwtAccessSecret;
 		return jwt.verify(token, secret);
 	}
