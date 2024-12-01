@@ -3,7 +3,7 @@ import Button from '@/components/Button';
 import InputField from '@/components/InputField';
 import { View, StyleSheet, Image, Text, TouchableOpacity } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation } from 'expo-router';
 
 
 const ForgotPasswordPage = () => {
@@ -24,17 +24,13 @@ const ForgotPasswordPage = () => {
 
     return (
         <View style={styles.topView}>
-            <Image
-                source={require('@/assets/images/login_background.png')}
-                style={styles.backgroundImage}
-            />
-            <View style={{ marginTop: 50, marginRight: 20, marginLeft: 20, marginBottom: '20%', }}>
+            <View style={{ marginTop: 50, marginRight: 20, marginLeft: 20, marginBottom: '5%', }}>
                 <TouchableOpacity onPress={handleBack} style={{ alignSelf: 'flex-start' }}>
-                    <Icon name="chevron-left" size={25} color="#fff" style={{ marginTop: 50, marginLeft: 20 }} />
+                    <Icon name="chevron-left" size={25} color="#fff" style={{ marginTop: 40, marginLeft: 5, paddingVertical: 10, paddingHorizontal: 15 }} />
                 </TouchableOpacity>
                 <Image
-                    source={require('@/assets/images/karins_logo.png')}
-                    style={{ width: 50, height: 50, marginTop: -40, marginRight: 20, alignSelf: 'flex-end' }}
+                    source={require('@/assets/images/smart-inspect_logo.png')}
+                    style={styles.image}
                 />
             </View>
             <View style={styles.container}>
@@ -47,8 +43,8 @@ const ForgotPasswordPage = () => {
                     style={styles.input} />
             </View>
             <View style={{ alignItems: 'center', marginBottom: '15%' }}>
-                <Button variant="primary" text="Send" onPress={handleForgotPassword} />
-                <Text style={{ color: '#fff', marginTop: 35, fontFamily: 'Poppins-Regular' }}>Don't have an account? <TouchableOpacity onPress={handleSignUp}><Text style={{ color: '#ffdb4f', marginBottom: -3, fontFamily: 'Poppins-SemiBold' }}>Sign Up</Text></TouchableOpacity></Text>
+                <Button variant="primary" text="SEND EMAIL" onPress={handleForgotPassword} />
+                <Text style={{ color: '#fff', marginTop: 35, fontFamily: 'Poppins-Regular' }}>Don't have an account? <TouchableOpacity onPress={handleSignUp}><Text style={{ color: '#ffdb4f', marginBottom: -5, fontFamily: 'Poppins-SemiBold' }}>Sign Up</Text></TouchableOpacity></Text>
             </View>
         </View>
     );
@@ -57,19 +53,19 @@ const ForgotPasswordPage = () => {
 const styles = StyleSheet.create({
     topView: {
         flex: 1,
+        backgroundColor: '#20575a',
     },
     container: {
         flex: 1,
         alignSelf: 'center',
-        position: 'relative'
+        marginTop: '10%'
     },
-    backgroundImage: {
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        resizeMode: 'cover',
+    image: {
+        width: 60,
+        height: 60,
+        marginTop: -55,
+        marginRight: 20,
+        alignSelf: 'flex-end'
     },
     title: {
         fontFamily: 'Poppins-Bold',

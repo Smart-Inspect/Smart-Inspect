@@ -1,9 +1,9 @@
 import React from 'react';
 import Button from '@/components/Button';
 import InputField from '@/components/InputField';
-import { View, StyleSheet, Image, Text, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, Image, Text, TouchableOpacity, ScrollView } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation } from 'expo-router';
 import { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useAPI } from '@/context/APIContext';
@@ -16,6 +16,7 @@ const LoginPage = () => {
 
     const [emailText, setEmailText] = useState('');
     const [passwordText, setPasswordText] = useState('');
+    const [loginFailed, setLoginFailed] = useState(false);
 
     function handleBack() {
         navigation.goBack();
@@ -23,12 +24,27 @@ const LoginPage = () => {
 
     async function handleLogin() {
         console.log('Login');
+        navigation.navigate('verify' as never);
         const body = {
             email: emailText,
             password: passwordText
         }
         const response = await api.request('login', 'POST', body, false);
-        auth.login({ accessToken: response.data.accessToken, refreshToken: response.data.refreshToken });
+        if (response.status !== 200) {
+            console.log('Login failed');
+            setLoginFailed(true);
+            return;
+        }
+
+        auth.login({ id: response.data.id, accessToken: response.data.accessToken, refreshToken: response.data.refreshToken });
+
+        if (!response.data.isAccountVerified) {
+            console.log('Account not verified');
+            navigation.navigate('verify' as never);
+        } else {
+            console.log('Account verified');
+            navigation.navigate('(tabs)' as never);
+        }
     }
 
     function handleForgotPassword() {
@@ -41,31 +57,30 @@ const LoginPage = () => {
 
     return (
         <View style={styles.topView}>
-            <Image
-                source={require('@/assets/images/login_background.png')}
-                style={styles.backgroundImage}
-            />
-            <View style={{ marginTop: 50, marginRight: 20, marginLeft: 20, marginBottom: '20%', }}>
+            <View style={{ marginTop: 50, marginRight: 20, marginLeft: 20, marginBottom: '5%', }}>
                 <TouchableOpacity onPress={handleBack} style={{ alignSelf: 'flex-start' }}>
-                    <Icon name="chevron-left" size={25} color="#fff" style={{ marginTop: 50, marginLeft: 20 }} />
+                    <Icon name="chevron-left" size={25} color="#fff" style={{ marginTop: 40, marginLeft: 5, paddingVertical: 10, paddingHorizontal: 15 }} />
                 </TouchableOpacity>
                 <Image
-                    source={require('@/assets/images/karins_logo.png')}
-                    style={{ width: 50, height: 50, marginTop: -40, marginRight: 20, alignSelf: 'flex-end' }}
+                    source={require('@/assets/images/smart-inspect_logo.png')}
+                    style={styles.image}
                 />
             </View>
             <View style={styles.container}>
-                <Text style={styles.title}>Hi!{'\n'}Welcome Back,</Text>
+                {!loginFailed ?
+                    <Text style={styles.title}>Hi!{'\n'}Welcome Back,</Text> :
+                    <Text style={styles.title}>Incorrect Email or{'\n'}Password{'\n\n'}Please try again.</Text>
+                }
                 <InputField
                     variant="primary"
-                    value={emailText}
+                    onChangeText={emailText => setEmailText(emailText)}
                     placeholder="Email"
                     keyboardType="email-address"
                     autoCapitalize="none"
                     style={styles.input} />
                 <InputField
                     variant="primary"
-                    value={passwordText}
+                    onChangeText={passwordText => setPasswordText(passwordText)}
                     placeholder="Password"
                     style={styles.input}
                     secureTextEntry />
@@ -75,7 +90,7 @@ const LoginPage = () => {
             </View>
             <View style={{ alignItems: 'center', marginBottom: '15%' }}>
                 <Button variant="primary" text="LOGIN" onPress={handleLogin} />
-                <Text style={{ color: '#fff', marginTop: 35, fontFamily: 'Poppins-Regular' }}>Don't have an account? <TouchableOpacity onPress={handleSignUp}><Text style={{ color: '#ffdb4f', marginBottom: -3, fontFamily: 'Poppins-SemiBold' }}>Sign Up</Text></TouchableOpacity></Text>
+                <Text style={{ color: '#fff', marginTop: 35, fontFamily: 'Poppins-Regular' }}>Don't have an account? <TouchableOpacity onPress={handleSignUp}><Text style={{ color: '#ffdb4f', marginBottom: -5, fontFamily: 'Poppins-SemiBold' }}>Sign Up</Text></TouchableOpacity></Text>
             </View>
         </View>
     );
@@ -84,19 +99,19 @@ const LoginPage = () => {
 const styles = StyleSheet.create({
     topView: {
         flex: 1,
+        backgroundColor: '#20575a',
     },
     container: {
         flex: 1,
         alignSelf: 'center',
-        position: 'relative'
+        marginTop: '10%'
     },
-    backgroundImage: {
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        resizeMode: 'cover',
+    image: {
+        width: 60,
+        height: 60,
+        marginTop: -55,
+        marginRight: 20,
+        alignSelf: 'flex-end'
     },
     title: {
         fontFamily: 'Poppins-Bold',

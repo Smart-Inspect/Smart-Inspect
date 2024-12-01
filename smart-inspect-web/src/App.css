@@ -1,0 +1,31 @@
+html {
+  background-color: #20575a;
+}
+
+.App {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.App-logo {
+  height: 195px;
+  pointer-events: none;
+  margin-bottom: -65px;
+}
+
+.App-title {
+  font-size: 3.5em;
+  font-family: Poppins;
+  font-weight: 600;
+  margin-bottom: -45px;
+  letter-spacing: 3px;
+  color: white;
+}
+
+.App-description {
+  font-size: 2em;
+  font-family: Poppins;
+  font-weight: 300;
+  color: white;
+}

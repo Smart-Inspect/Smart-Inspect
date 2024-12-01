@@ -1,0 +1,21 @@
+.primary {
+    height: 40px;
+    background-color: transparent;
+    border-width: 0;
+    border-bottom-color: #fff;
+    border-bottom-width: 1px;
+    color: #fff;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 300;
+    font-size: 18px;
+    width: 100%;
+}
+
+.eye-icon {
+    background-color: transparent;
+    border: 0;
+    width: 25px;
+    height: 25px;
+    margin-left: -20px;
+    margin-top: 10px;
+}

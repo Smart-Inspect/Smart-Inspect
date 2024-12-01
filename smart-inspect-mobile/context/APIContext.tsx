@@ -1,8 +1,7 @@
-import React, { createContext, useState, useEffect, useContext, ReactNode } from 'react';
+import React, { createContext, useContext, ReactNode } from 'react';
 import { useAuth } from './AuthContext';
-//import { useNavigation } from '@react-navigation/native';
-import { ENV } from "@/utils/env";
-//import * as rootNavigation from "@/utils/rootNavigation";
+import { useNavigation } from 'expo-router';
+import { ENV } from '@/utils/env';
 
 class Response {
     status: number = 0;
@@ -22,9 +21,9 @@ const APIContext = createContext<APIContextType | undefined>(undefined);
 
 export const APIProvider = ({ children }: { children: ReactNode }) => {
     const auth = useAuth();
-    //const navigation = useNavigation();
+    const navigation = useNavigation();
 
-    async function request(url: string, method: "GET" | "POST" | "PUT" | "DELETE", body: any | undefined, isAuthorized: boolean): Promise<Response> {
+    const request = async (url: string, method: "GET" | "POST" | "PUT" | "DELETE", body: any | undefined, isAuthorized: boolean): Promise<Response> => {
         const response = await fetch(`${ENV.API_URL}/api/${url}`, {
             method,
             headers: {
@@ -42,14 +41,14 @@ export const APIProvider = ({ children }: { children: ReactNode }) => {
             if (result) {
                 return await request(url, method, body, isAuthorized);
             } else {
-                //rootNavigation.navigate("login" as never);
+                navigation.navigate("landing" as never);
             }
         }
 
         return returnVal;
     }
 
-    async function refreshToken(): Promise<boolean> {
+    const refreshToken = async (): Promise<boolean> => {
         const response = await fetch(`${ENV.API_URL}/api/refresh`, {
             method: "GET",
             headers: {
@@ -67,9 +66,9 @@ export const APIProvider = ({ children }: { children: ReactNode }) => {
         // Get new access token
         const data = await response.json();
         if (auth.refreshToken) {
-            auth.login({ accessToken: data.accessToken, refreshToken: auth.refreshToken });
+            auth.login({ id: auth.id as string, accessToken: data.accessToken, refreshToken: auth.refreshToken as string });
         } else {
-            throw new Error("No refresh token found");
+            throw new Error("No refresh token and/or id found");
         }
 
         return true;
@@ -85,7 +84,7 @@ export const APIProvider = ({ children }: { children: ReactNode }) => {
 export const useAPI = () => {
     const context = useContext(APIContext);
     if (context === undefined) {
-        throw new Error('useAPI must be used within an AuthProvider');
+        throw new Error('useAPI must be used within an APIProvider');
     }
     return context;
 }

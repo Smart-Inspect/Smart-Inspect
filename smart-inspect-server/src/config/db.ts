@@ -1,7 +1,4 @@
 import mongoose from 'mongoose';
-import dotenv from 'dotenv';
-
-dotenv.config();
 
 class Database {
 	async connect() {
@@ -13,9 +10,9 @@ class Database {
 					useNewUrlParser: true
 				} as mongoose.ConnectOptions
 			);
-			console.log('MongoDB connected');
+			console.log('[DB] MongoDB connected');
 		} catch (error) {
-			console.error('MongoDB connection error:', error);
+			console.error('[DB] MongoDB connection error:', error);
 		}
 	}
 

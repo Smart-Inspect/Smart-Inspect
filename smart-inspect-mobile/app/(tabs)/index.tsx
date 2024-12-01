@@ -1,99 +1,91 @@
-import { Image, StyleSheet, Platform } from 'react-native';
-import { useEffect, useState } from 'react';
+import InputField from '@/components/InputField';
+import React, { useState } from 'react';
+import { View, FlatList, Text, StyleSheet } from 'react-native';
+import MapView from 'react-native-maps';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
-import { HelloWave } from '@/components/HelloWave';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
+export default function DashboardScreen() {
 
-import { ENV } from '@/utils/env';
+    const data = [
+        { id: '1', name: 'Apple' },
+        { id: '2', name: 'Banana' },
+        { id: '3', name: 'Orange' },
+        { id: '4', name: 'Mango' },
+        { id: '5', name: 'Grapes' },
+        { id: '6', name: 'Pineapple' },
+    ];
 
-export default function HomeScreen() {
+    const [searchQuery, setSearchQuery] = useState('');
+    const [filteredData, setFilteredData] = useState(data);
 
-  const [serverStatus, setServerStatus] = useState<string | null>(null);
+    // Function to filter data based on search input
+    const handleSearch = (query: string) => {
+        setSearchQuery(query);
+        const filteredItems = data.filter(item =>
+            item.name.toLowerCase().includes(query.toLowerCase())
+        );
+        setFilteredData(filteredItems);
+    };
 
-  const checkAPI = async () => {
-    try {
-      //const response = await fetch(`${ENV.API_URL}/api`);
-      //const data = await response.json();
-      //setServerStatus(data.status);
-      setServerStatus('Connected');
-    } catch (error) {
-      console.error('Error fetching server status:', error);
-      setServerStatus('Error');
-    }
-  };
+    return (
+        <View style={styles.container}>
+            <InputField
+                variant="secondary"
+                onChangeText={handleSearch}
+                placeholder="Search projects..."
+                keyboardType="default"
+                autoCapitalize="sentences"
+                style={{ marginTop: 10, marginHorizontal: 10, marginBottom: 10 }}
+            />
 
-  useEffect(() => {
-    checkAPI();
-  }, []);
+            <Text style={styles.title}>Assigned Projects</Text>
+            <Text style={styles.descripton}>Please select applicable project</Text>
 
-  /*return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({ ios: 'cmd + d', android: 'cmd + m' })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-        <ThemedText>
-          Tap the Explore tab to learn more about what's included in this starter app.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          When you're ready, run{' '}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
+            <MapView style={styles.map} />
 
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">SERVER CONNECTION STATUS</ThemedText>
-        <ThemedText>
-          Connection Status: <ThemedText type="defaultSemiBold">{serverStatus}</ThemedText>
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
-  );*/
+            <FlatList
+                data={filteredData}
+                keyExtractor={(item) => item.id}
+                renderItem={({ item }) => (
+                    <View style={{ padding: 10, borderBottomWidth: 1, borderColor: '#ccc' }}>
+                        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                            <Icon name='map-marker-outline' size={35} style={{ marginRight: 10 }} />
+                            <Text style={{ padding: 10, color: '#053331', fontFamily: 'Poppins-Light', fontSize: 16 }}>
+                                {item.name}
+                            </Text>
+                        </View>
+                    </View>
+                )}
+            />
+        </View >
+    )
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
-  },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
-  },
+    container: {
+        flex: 1,
+        //paddingTop: 50,
+        backgroundColor: '#fff',
+    },
+    title: {
+        fontSize: 28,
+        fontFamily: 'Poppins-Medium',
+        alignSelf: 'center',
+        color: '#053331',
+        minWidth: 250,
+        minHeight: 40
+    },
+    descripton: {
+        fontSize: 16,
+        fontFamily: 'Poppins-Light',
+        alignSelf: 'center',
+        color: '#053331',
+        minWidth: 255,
+        minHeight: 25,
+        marginBottom: 10
+    },
+    map: {
+        width: '100%',
+        height: '40%'
+    }
 });

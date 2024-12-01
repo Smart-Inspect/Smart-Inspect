@@ -1,4 +1,3 @@
-import { number } from 'io-ts';
 import mongoose, { Document, Schema } from 'mongoose';
 import permissions from '../config/permissions';
 
@@ -7,12 +6,11 @@ interface IUser extends Document {
 	passwordHash: string;
 	firstName: string;
 	lastName: string;
-	permissions: {
-		Engineer: number;
-		Manager: number;
-		Admin: number;
-	};
-	authTokens: string[];
+	permissions: number[];
+	refreshTokens: string[];
+	resetToken: string;
+	verifyToken: string;
+	accountVerified: boolean;
 }
 
 const userSchema: Schema = new Schema({
@@ -20,12 +18,12 @@ const userSchema: Schema = new Schema({
 	passwordHash: { type: String, required: true },
 	firstName: { type: String, required: true },
 	lastName: { type: String, required: true },
-	permissions: {
-		Engineer: { type: number, default: permissions.ENGINEER },
-		Manager: { type: number },
-		Admin: { type: number }
-	},
-	authTokens: { type: [String], required: false }
+	creationDate: { type: Date, default: Date.now },
+	permissions: { type: [Number], default: [permissions.ENGINEER] },
+	refreshTokens: { type: [String], required: false },
+	resetToken: { type: String, required: false },
+	verifyToken: { type: String, required: false },
+	accountVerified: { type: Boolean, default: false }
 });
 
 const User = mongoose.model<IUser>('User', userSchema);

@@ -1,0 +1,15 @@
+.page-title {
+    font-size: 4em;
+    font-family: Poppins;
+    font-weight: 600;
+    color: #ffdb4f;
+    text-align: center;
+}
+
+.page-content {
+    font-size: 1.5em;
+    font-family: Poppins;
+    font-weight: 300;
+    color: white;
+    text-align: center;
+}
