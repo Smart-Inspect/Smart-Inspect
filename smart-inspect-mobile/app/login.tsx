@@ -7,9 +7,10 @@ import { useNavigation } from 'expo-router';
 import { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useAPI } from '@/context/APIContext';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 
-const LoginPage = () => {
+export default function LoginPage() {
     const navigation = useNavigation();
     const auth = useAuth();
     const api = useAPI();
@@ -23,20 +24,20 @@ const LoginPage = () => {
     }
 
     async function handleLogin() {
-        console.log('Login');
-        navigation.navigate('verify' as never);
         const body = {
             email: emailText,
             password: passwordText
         }
-        const response = await api.request('login', 'POST', body, false);
+        const response = await api.request('users/login', 'POST', body, false);
         if (response.status !== 200) {
-            console.log('Login failed');
+            console.log('Login failed: ' + response.data.error);
             setLoginFailed(true);
             return;
         }
+        console.log('Login successful');
 
-        auth.login({ id: response.data.id, accessToken: response.data.accessToken, refreshToken: response.data.refreshToken });
+        await auth.login(response.data.id, response.data.accessToken, response.data.refreshToken, response.data.isAccountVerified);
+        await AsyncStorage.setItem('loginTime', new Date().getTime().toString());
 
         if (!response.data.isAccountVerified) {
             console.log('Account not verified');
@@ -66,33 +67,35 @@ const LoginPage = () => {
                     style={styles.image}
                 />
             </View>
-            <View style={styles.container}>
-                {!loginFailed ?
-                    <Text style={styles.title}>Hi!{'\n'}Welcome Back,</Text> :
-                    <Text style={styles.title}>Incorrect Email or{'\n'}Password{'\n\n'}Please try again.</Text>
-                }
-                <InputField
-                    variant="primary"
-                    onChangeText={emailText => setEmailText(emailText)}
-                    placeholder="Email"
-                    keyboardType="email-address"
-                    autoCapitalize="none"
-                    style={styles.input} />
-                <InputField
-                    variant="primary"
-                    onChangeText={passwordText => setPasswordText(passwordText)}
-                    placeholder="Password"
-                    style={styles.input}
-                    secureTextEntry />
-                <TouchableOpacity onPress={handleForgotPassword}>
-                    <Text style={{ color: '#fff', alignSelf: 'flex-end', fontFamily: 'Poppins-Regular' }}>Forgot Password?</Text>
-                </TouchableOpacity>
+            <View style={styles.mainContainer}>
+                <View style={styles.inputContainer}>
+                    {!loginFailed ?
+                        <Text style={styles.title}>Hi!{'\n'}Welcome Back,</Text> :
+                        <Text style={styles.title}>Incorrect Email or{'\n'}Password{'\n\n'}Please try again.</Text>
+                    }
+                    <InputField
+                        variant="primary"
+                        onChangeText={emailText => setEmailText(emailText)}
+                        placeholder="Email"
+                        keyboardType="email-address"
+                        autoCapitalize="none"
+                        style={styles.input} />
+                    <InputField
+                        variant="primary"
+                        onChangeText={passwordText => setPasswordText(passwordText)}
+                        placeholder="Password"
+                        style={styles.input}
+                        secureTextEntry />
+                    <TouchableOpacity onPress={handleForgotPassword}>
+                        <Text style={{ color: '#fff', alignSelf: 'flex-end', fontFamily: 'Poppins-Regular' }}>Forgot Password?</Text>
+                    </TouchableOpacity>
+                </View>
+                <View style={styles.submitContainer}>
+                    <Button variant="primary" text="LOGIN" onPress={handleLogin} />
+                    <Text style={{ color: '#fff', marginTop: 35, fontFamily: 'Poppins-Regular' }}>Don't have an account? <TouchableOpacity onPress={handleSignUp}><Text style={{ color: '#ffdb4f', marginBottom: -5, fontFamily: 'Poppins-SemiBold' }}>Sign Up</Text></TouchableOpacity></Text>
+                </View>
             </View>
-            <View style={{ alignItems: 'center', marginBottom: '15%' }}>
-                <Button variant="primary" text="LOGIN" onPress={handleLogin} />
-                <Text style={{ color: '#fff', marginTop: 35, fontFamily: 'Poppins-Regular' }}>Don't have an account? <TouchableOpacity onPress={handleSignUp}><Text style={{ color: '#ffdb4f', marginBottom: -5, fontFamily: 'Poppins-SemiBold' }}>Sign Up</Text></TouchableOpacity></Text>
-            </View>
-        </View>
+        </View >
     );
 };
 
@@ -101,10 +104,20 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: '#20575a',
     },
-    container: {
+    mainContainer: { 
         flex: 1,
-        alignSelf: 'center',
-        marginTop: '10%'
+        width: '100%',
+        height: '100%',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    inputContainer: {
+        marginTop: '-10%',
+        height: 450
+    },
+    submitContainer: {
+        height: 125,
+        alignItems: 'center'
     },
     image: {
         width: 60,
@@ -125,5 +138,3 @@ const styles = StyleSheet.create({
         minWidth: 300
     },
 });
-
-export default LoginPage;

@@ -3,7 +3,7 @@ import { View, StyleSheet, Image, Text } from 'react-native';
 import Button from '@/components/Button';
 import { useNavigation } from 'expo-router';
 
-const LandingPage = () => {
+export default function LandingPage() {
     const navigation = useNavigation();
 
     function handleLogin() {
@@ -73,5 +73,3 @@ const styles = StyleSheet.create({
         marginBottom: 80,
     }
 });
-
-export default LandingPage;

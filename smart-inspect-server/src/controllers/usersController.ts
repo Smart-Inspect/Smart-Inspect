@@ -153,7 +153,13 @@ export async function viewUser(req: Request, res: Response) {
 		res.status(404).json({ error: 'User not found' });
 		return;
 	}
-	res.status(200).json({ email: existingUser.email, firstName: existingUser.firstName, lastName: existingUser.lastName, permissions: existingUser.permissions });
+	res.status(200).json({
+		email: existingUser.email,
+		firstName: existingUser.firstName,
+		lastName: existingUser.lastName,
+		permissions: existingUser.permissions,
+		creationDate: existingUser.creationDate.getTime().toString()
+	});
 }
 
 export async function editUser(req: Request, res: Response) {

@@ -5,6 +5,6 @@ import refreshType from '../types/refreshTypes';
 
 const router = Router();
 
-router.get('/', validateBody(refreshType.ForRefresh), refreshToken);
+router.post('/', validateBody(refreshType.ForRefresh), refreshToken);
 
 export default router;

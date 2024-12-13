@@ -1,3 +1,4 @@
+import { ColorTypes, useColor } from '@/context/ColorContext';
 import { Modal, StyleSheet, View, TouchableWithoutFeedback } from 'react-native';
 
 interface ModalProps {
@@ -9,6 +10,8 @@ interface ModalProps {
 }
 
 const Popup: React.FC<ModalProps> = ({ animationType, transparent, visible, onRequestClose, children }) => {
+    const color = useColor();
+    const styles = getStyles(color.getColors());
 
     const closeModal = () => {
         onRequestClose();
@@ -34,19 +37,21 @@ const Popup: React.FC<ModalProps> = ({ animationType, transparent, visible, onRe
     );
 };
 
-const styles = StyleSheet.create({
-    modalOverlay: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: 'rgba(0, 0, 0, 0.5)', // Semi-transparent background
-    },
-    modalContent: {
-        backgroundColor: '#fff',
-        padding: 20,
-        borderRadius: 10,
-        alignItems: 'center',
-    }
-});
+function getStyles(color: ColorTypes) {
+    return StyleSheet.create({
+        modalOverlay: {
+            flex: 1,
+            justifyContent: 'center',
+            alignItems: 'center',
+            backgroundColor: 'rgba(0, 0, 0, 0.5)', // Semi-transparent background
+        },
+        modalContent: {
+            backgroundColor: color.foreground,
+            padding: 20,
+            borderRadius: 10,
+            alignItems: 'center',
+        }
+    });
+}
 
 export default Popup;

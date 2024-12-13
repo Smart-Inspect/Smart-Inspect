@@ -22,14 +22,15 @@ async function main() {
 	// Set up CORS for development
 	if (BUILD_TYPE === 'development') {
 		console.log('[APP] Setting up CORS for development');
-		app.use(
-			cors({
-				origin: process.env.WEB_URL,
-				methods: ['GET', 'POST', 'PUT', 'DELETE'],
-				allowedHeaders: ['Content Type', 'Access-Control-Allow-Origin', 'Access-Control-Allow-Methods'],
-				credentials: false
-			})
-		);
+		const corsOptions = {
+			origin: process.env.WEB_URL,
+			methods: ['GET', 'POST', 'PUT', 'DELETE'],
+			allowedHeaders: ['Content-Type'],
+			credentials: false
+		};
+
+		app.use(cors(corsOptions));
+		app.options('*', cors(corsOptions));
 	}
 
 	// Database Connection

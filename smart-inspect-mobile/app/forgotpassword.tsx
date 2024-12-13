@@ -6,7 +6,7 @@ import Icon from 'react-native-vector-icons/FontAwesome';
 import { useNavigation } from 'expo-router';
 
 
-const ForgotPasswordPage = () => {
+export default function ForgotPasswordPage() {
     const navigation = useNavigation();
 
     function handleBack() {
@@ -33,18 +33,20 @@ const ForgotPasswordPage = () => {
                     style={styles.image}
                 />
             </View>
-            <View style={styles.container}>
-                <Text style={styles.title}>Forgot{'\n'}Password?</Text>
-                <InputField
-                    variant="primary"
-                    placeholder="Email"
-                    keyboardType="email-address"
-                    autoCapitalize="none"
-                    style={styles.input} />
-            </View>
-            <View style={{ alignItems: 'center', marginBottom: '15%' }}>
-                <Button variant="primary" text="SEND EMAIL" onPress={handleForgotPassword} />
-                <Text style={{ color: '#fff', marginTop: 35, fontFamily: 'Poppins-Regular' }}>Don't have an account? <TouchableOpacity onPress={handleSignUp}><Text style={{ color: '#ffdb4f', marginBottom: -5, fontFamily: 'Poppins-SemiBold' }}>Sign Up</Text></TouchableOpacity></Text>
+            <View style={styles.mainContainer}>
+                <View style={styles.inputContainer}>
+                    <Text style={styles.title}>Forgot{'\n'}Password?</Text>
+                    <InputField
+                        variant="primary"
+                        placeholder="Email"
+                        keyboardType="email-address"
+                        autoCapitalize="none"
+                        style={styles.input} />
+                </View>
+                <View style={styles.submitContainer}>
+                    <Button variant="primary" text="SEND EMAIL" onPress={handleForgotPassword} />
+                    <Text style={{ color: '#fff', marginTop: 35, fontFamily: 'Poppins-Regular' }}>Don't have an account? <TouchableOpacity onPress={handleSignUp}><Text style={{ color: '#ffdb4f', marginBottom: -5, fontFamily: 'Poppins-SemiBold' }}>Sign Up</Text></TouchableOpacity></Text>
+                </View>
             </View>
         </View>
     );
@@ -55,10 +57,20 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: '#20575a',
     },
-    container: {
+    mainContainer: { 
         flex: 1,
-        alignSelf: 'center',
-        marginTop: '10%'
+        width: '100%',
+        height: '100%',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    inputContainer: {
+        marginTop: '-10%',
+        height: 450
+    },
+    submitContainer: {
+        height: 125,
+        alignItems: 'center'
     },
     image: {
         width: 60,
@@ -79,5 +91,3 @@ const styles = StyleSheet.create({
         minWidth: 300
     },
 });
-
-export default ForgotPasswordPage;

@@ -8,7 +8,7 @@ import { useState } from 'react';
 import { useAPI } from '@/context/APIContext';
 
 
-const SignUpPage = () => {
+export default function SignUpPage() {
     const navigation = useNavigation();
     const api = useAPI();
 
@@ -30,8 +30,6 @@ const SignUpPage = () => {
     }
 
     async function handleSignUp() {
-        console.log('Sign Up');
-
         if (firstNameText === '') {
             console.log('First Name is required');
             setRequiredFieldEmpty({ ...requiredFieldEmpty, firstName: true });
@@ -71,11 +69,12 @@ const SignUpPage = () => {
             lastName: lastNameText
         }
 
-        const response = await api.request('signup', 'POST', body, false);
+        const response = await api.request('users/create', 'POST', body, false);
         if (response.status !== 201) {
-            console.log('Sign up failed');
+            console.log('Sign up failed: ' + response.data.error);
             return;
         }
+        console.log('Sign Up successful');
         navigation.navigate('login' as never);
     }
 
@@ -90,52 +89,54 @@ const SignUpPage = () => {
                     style={styles.image}
                 />
             </View>
-            <View style={styles.container}>
-                {!signupFailed ?
-                    <Text style={styles.title}>Create{'\n'}New Account</Text> :
-                    <Text style={styles.title}>Sign-Up Failed{'\n'}Please try again.</Text>
-                }
-                <InputField
-                    variant="primary"
-                    onChangeText={firstNameText => setFirstNameText(firstNameText)}
-                    placeholder="First Name"
-                    autoCapitalize="words"
-                    style={styles.input} />
-                <Text style={styles.requiredField}>{requiredFieldEmpty.firstName ? 'This field is required.' : ''}</Text>
-                <InputField
-                    variant="primary"
-                    onChangeText={lastNameText => setLastNameText(lastNameText)}
-                    placeholder="Last Name"
-                    autoCapitalize="words"
-                    style={styles.input} />
-                <Text style={styles.requiredField}>{requiredFieldEmpty.lastName ? 'This field is required.' : ''}</Text>
-                <InputField
-                    variant="primary"
-                    onChangeText={emailText => setEmailText(emailText)}
-                    placeholder="Email"
-                    keyboardType="email-address"
-                    autoCapitalize="none"
-                    style={styles.input} />
-                <Text style={styles.requiredField}>{requiredFieldEmpty.email ? 'This field is required.' : ''}</Text>
-                <InputField
-                    variant="primary"
-                    onChangeText={passwordText => setPasswordText(passwordText)}
-                    placeholder="Password"
-                    style={styles.input}
-                    secureTextEntry />
-                <Text style={styles.requiredField}>{requiredFieldEmpty.password ? 'This field is required.' : ''}</Text>
-                <InputField
-                    variant="primary"
-                    onChangeText={confirmPasswordText => setConfirmPasswordText(confirmPasswordText)}
-                    placeholder="Confirm Password"
-                    style={styles.input}
-                    secureTextEntry />
-                <Text style={styles.requiredField}>{requiredFieldEmpty.confirmPassword ? 'This field is required.' : ''}</Text>
-                <Text style={{ color: '#ffdb4f', marginTop: -20, fontFamily: 'Poppins-Light' }}>{passwordsDoNotMatch ? 'Passwords do not match. Please try again.' : ''}</Text>
-            </View>
-            <View style={{ alignItems: 'center', marginBottom: '15%' }}>
-                <Button variant="primary" text="SIGN UP" onPress={handleSignUp} />
-                <Text style={{ color: '#fff', marginTop: 35, fontFamily: 'Poppins-Regular' }}>Have an account? <TouchableOpacity onPress={handleLogin}><Text style={{ color: '#ffdb4f', marginBottom: -5, fontFamily: 'Poppins-SemiBold' }}>Log In</Text></TouchableOpacity></Text>
+            <View style={styles.mainContainer}>
+                <View style={styles.inputContainer}>
+                    {!signupFailed ?
+                        <Text style={styles.title}>Create{'\n'}New Account</Text> :
+                        <Text style={styles.title}>Sign-Up Failed{'\n'}Please try again.</Text>
+                    }
+                    <InputField
+                        variant="primary"
+                        onChangeText={firstNameText => setFirstNameText(firstNameText)}
+                        placeholder="First Name"
+                        autoCapitalize="words"
+                        style={styles.input} />
+                    <Text style={styles.requiredField}>{requiredFieldEmpty.firstName ? 'This field is required.' : ''}</Text>
+                    <InputField
+                        variant="primary"
+                        onChangeText={lastNameText => setLastNameText(lastNameText)}
+                        placeholder="Last Name"
+                        autoCapitalize="words"
+                        style={styles.input} />
+                    <Text style={styles.requiredField}>{requiredFieldEmpty.lastName ? 'This field is required.' : ''}</Text>
+                    <InputField
+                        variant="primary"
+                        onChangeText={emailText => setEmailText(emailText)}
+                        placeholder="Email"
+                        keyboardType="email-address"
+                        autoCapitalize="none"
+                        style={styles.input} />
+                    <Text style={styles.requiredField}>{requiredFieldEmpty.email ? 'This field is required.' : ''}</Text>
+                    <InputField
+                        variant="primary"
+                        onChangeText={passwordText => setPasswordText(passwordText)}
+                        placeholder="Password"
+                        style={styles.input}
+                        secureTextEntry />
+                    <Text style={styles.requiredField}>{requiredFieldEmpty.password ? 'This field is required.' : ''}</Text>
+                    <InputField
+                        variant="primary"
+                        onChangeText={confirmPasswordText => setConfirmPasswordText(confirmPasswordText)}
+                        placeholder="Confirm Password"
+                        style={styles.input}
+                        secureTextEntry />
+                    <Text style={styles.requiredField}>{requiredFieldEmpty.confirmPassword ? 'This field is required.' : ''}</Text>
+                    <Text style={{ color: '#ffdb4f', marginTop: -20, fontFamily: 'Poppins-Light' }}>{passwordsDoNotMatch ? 'Passwords do not match. Please try again.' : ''}</Text>
+                </View>
+                <View style={styles.submitContainer}>
+                    <Button variant="primary" text="SIGN UP" onPress={handleSignUp} />
+                    <Text style={{ color: '#fff', marginTop: 35, fontFamily: 'Poppins-Regular' }}>Have an account? <TouchableOpacity onPress={handleLogin}><Text style={{ color: '#ffdb4f', marginBottom: -5, fontFamily: 'Poppins-SemiBold' }}>Log In</Text></TouchableOpacity></Text>
+                </View>
             </View>
         </View>
     );
@@ -146,10 +147,20 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: '#20575a',
     },
-    container: {
+    mainContainer: { 
         flex: 1,
-        alignSelf: 'center',
-        marginTop: '10%'
+        width: '100%',
+        height: '100%',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    inputContainer: {
+        marginTop: '-10%',
+        height: 450
+    },
+    submitContainer: {
+        height: 125,
+        alignItems: 'center'
     },
     image: {
         width: 60,
@@ -176,5 +187,3 @@ const styles = StyleSheet.create({
         alignSelf: 'flex-end'
     }
 });
-
-export default SignUpPage;

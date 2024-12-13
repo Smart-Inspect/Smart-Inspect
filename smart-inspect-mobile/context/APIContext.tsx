@@ -24,22 +24,37 @@ export const APIProvider = ({ children }: { children: ReactNode }) => {
     const navigation = useNavigation();
 
     const request = async (url: string, method: "GET" | "POST" | "PUT" | "DELETE", body: any | undefined, isAuthorized: boolean): Promise<Response> => {
+        return requestInternal(url, method, body, isAuthorized, auth.accessToken as string);
+    }
+
+    const requestInternal = async (url: string, method: "GET" | "POST" | "PUT" | "DELETE", body: any | undefined, isAuthorized: boolean, accessToken: string): Promise<Response> => {
+    /*if (isAuthorized && !auth.accessToken) {
+        console.log('[API] No access token found, refreshing token');
+        const result = await refreshToken();
+        if (!result) {
+            navigation.navigate("landing" as never);
+            return new Response(401, { error: "Unauthorized" });
+        }
+    }*/
+
         const response = await fetch(`${ENV.API_URL}/api/${url}`, {
             method,
             headers: {
-                Authorization: isAuthorized ? `Bearer ${auth.accessToken}` : "",
+                Authorization: isAuthorized ? `Bearer ${accessToken}` : "",
                 "Content-Type": "application/json",
             },
-            body,
+            body: body ? JSON.stringify(body) : undefined,
         });
 
-        const returnVal = new Response(response.status, await response.json());
+        const data = response.status !== 204 ? await response.json() : null;
+        const returnVal = new Response(response.status, data);
 
         // Handle unauthorized by getting new access token
         if (isAuthorized && returnVal.status === 401) {
-            const result = await refreshToken();
-            if (result) {
-                return await request(url, method, body, isAuthorized);
+            console.log('[API] Unauthorized, refreshing token');
+            const newAccessToken = await refreshToken();
+            if (newAccessToken) {
+                return await requestInternal(url, method, body, isAuthorized, newAccessToken);
             } else {
                 navigation.navigate("landing" as never);
             }
@@ -48,30 +63,31 @@ export const APIProvider = ({ children }: { children: ReactNode }) => {
         return returnVal;
     }
 
-    const refreshToken = async (): Promise<boolean> => {
-        const response = await fetch(`${ENV.API_URL}/api/refresh`, {
-            method: "GET",
+    const refreshToken = async (): Promise<string | null> => {
+        const response = await fetch(`${ENV.API_URL}/api/refresh/`, {
+            method: "POST",
             headers: {
-                Authorization: `Bearer ${auth.refreshToken}`,
                 "Content-Type": "application/json",
             },
+            body: JSON.stringify({ refreshToken: auth.refreshToken }),
         });
 
         // Refresh token is no longer valid
         if (response.status == 401) {
-            auth.logout();
-            return false;
+            console.log('[API] Refresh token is no longer valid, logging out');
+            await auth.logout();
+            return null;
         }
 
         // Get new access token
         const data = await response.json();
         if (auth.refreshToken) {
-            auth.login({ id: auth.id as string, accessToken: data.accessToken, refreshToken: auth.refreshToken as string });
+            await auth.login(auth.id as string, data.accessToken, auth.refreshToken as string, auth.isVerified);
         } else {
             throw new Error("No refresh token and/or id found");
         }
 
-        return true;
+        return data.accessToken;
     }
 
     return (

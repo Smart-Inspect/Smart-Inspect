@@ -6,6 +6,7 @@ interface IUser extends Document {
 	passwordHash: string;
 	firstName: string;
 	lastName: string;
+	creationDate: Date;
 	permissions: number[];
 	refreshTokens: string[];
 	resetToken: string;
