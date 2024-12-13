@@ -1,0 +1,12 @@
+.primary {
+    background-color: #ffdb4f;
+    border-color: #ffdb4f;
+    border-width: 0;
+    padding: 5px;
+    border-radius: 25px;
+    color: #053331;
+    font-family: 'Poppins', sans-serif;
+    font-weight: bold;
+    letter-spacing: 2px;
+    font-size: 18px;
+}

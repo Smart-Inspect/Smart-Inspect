@@ -1,39 +1,61 @@
-import express, { Request, Response } from 'express';
-import database from './config/db';
-import users from './routes/users';
 import dotenv from 'dotenv';
-
+export const BUILD_TYPE = process.env.NODE_ENV === 'production' ? 'production' : 'development';
 dotenv.config({
-	path:
-		process.env.NODE_ENV === 'production'
-			? '.env.production'
-			: '.env.development'
+	path: BUILD_TYPE === 'production' ? '.env.production' : '.env.development'
 });
 
-const app = express();
-const PORT = process.env.PORT;
+import express, { Request, Response } from 'express';
+import cookieParser from 'cookie-parser';
+import cors from 'cors';
+import database from './config/db';
+import mail from './config/mail';
+import usersRoute from './routes/usersRoute';
+import refreshRoute from './routes/refreshRoute';
 
-// Middleware
-app.use(express.json());
-// TODO: ADD AUTHENTICATION
+async function main() {
+	const app = express();
+	const PORT = parseInt(process.env.PORT as string) || 3000;
 
-// Database Connection
-database.connect();
+	// Middleware
+	app.use(express.json());
+	app.use(cookieParser());
+	// Set up CORS for development
+	if (BUILD_TYPE === 'development') {
+		console.log('[APP] Setting up CORS for development');
+		const corsOptions = {
+			origin: process.env.WEB_URL,
+			methods: ['GET', 'POST', 'PUT', 'DELETE'],
+			allowedHeaders: ['Content-Type'],
+			credentials: false
+		};
 
-// Test Routes
-app.get('/', (req: Request, res: Response) => {
-	res.send('Hello World');
-});
-app.get('/api', (req: Request, res: Response) => {
-	res.json({ status: 'Connected to API' });
-});
-app.get('/mongo', (req: Request, res: Response) => {
-	res.send(`MongoDB connected: ${database.isConnected()}`);
-});
+		app.use(cors(corsOptions));
+		app.options('*', cors(corsOptions));
+	}
 
-// Routes
-app.use('/api/users', users);
+	// Database Connection
+	await database.connect();
+	// Email Setup
+	await mail.setup();
 
-app.listen(PORT, () => {
-	console.log(`Server is running on http://localhost:${PORT}`);
-});
+	// Test Routes
+	app.get('/', (req: Request, res: Response) => {
+		res.send('Hello World');
+	});
+	app.get('/api', (req: Request, res: Response) => {
+		res.json({ status: 'Connected to API' });
+	});
+	app.get('/mongo', (req: Request, res: Response) => {
+		res.send(`MongoDB connected: ${database.isConnected()}`);
+	});
+
+	// Routes
+	app.use('/api/refresh', refreshRoute);
+	app.use('/api/users', usersRoute);
+
+	app.listen(PORT, '0.0.0.0', () => {
+		console.log(`[APP] Server is running on http://localhost:${PORT}`);
+	});
+}
+
+main();
