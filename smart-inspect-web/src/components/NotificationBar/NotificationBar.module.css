@@ -1,0 +1,44 @@
+.notification-bar {
+    position: fixed;
+    top: -100px;
+    right: 0;
+    color: white;
+    text-align: center;
+    padding: 10px 20px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    font-size: 18px;
+    z-index: 1000;
+    opacity: 0;
+    transition: all 0.5s ease;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.notification-bar-left {
+    left: 250px;
+    transition: all 0.3s ease;
+}
+
+@media (max-width: 960px) {
+    .notification-bar-left {
+        left: 75px;
+    }
+}
+
+.notification-bar.visible {
+    top: 0;
+    opacity: 1;
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    color: white;
+    cursor: pointer;
+    margin-left: 20px;
+}
+
+.close-btn:hover {
+    color: #ddd;
+}

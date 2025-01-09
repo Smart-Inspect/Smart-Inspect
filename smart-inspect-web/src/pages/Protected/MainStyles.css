@@ -1,0 +1,231 @@
+.M-App {
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    flex-direction: row;
+}
+
+.M-App-Content {
+    margin-left: 250px;
+    width: 100%;
+    height: 100%;
+    padding-left: 50px;
+    padding-right: 50px;
+    padding-top: 30px;
+    font-family: 'Poppins', sans-serif;
+    transition: margin-left 0.3s ease;
+}
+
+@media (max-width: 960px) {
+    .M-App-Content {
+        margin-left: 75px;
+    }
+}
+
+.M-container {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    animation: fadeInUp 0.25s ease-in-out;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.M-title {
+    font-size: 50px;
+    font-weight: 600;
+    color: var(--text-color);
+    margin-bottom: 20px;
+    margin: 0px;
+}
+
+.M-icon {
+    color: var(--icon-color);
+}
+
+.M-text-color {
+    color: var(--text-color);
+}
+
+.M-text-warning {
+    color: var(--text-warning);
+}
+
+.M-text-danger {
+    color: var(--text-danger);
+}
+
+.M-border-color {
+    border: 1px solid var(--border-color);
+}
+
+.M-border-warning {
+    border: 1px solid var(--border-warning);
+}
+
+.M-border-danger {
+    border: 1px solid var(--border-danger);
+}
+
+.M-section {
+    background-color: var(--foreground-color);
+    width: 100%;
+    border-radius: 10px;
+}
+
+.M-section-header {
+    font-size: 28px;
+    font-weight: 300;
+    color: var(--text-color);
+}
+
+.M-section-description {
+    font-size: 18px;
+}
+
+.M-section-entry {
+    border-bottom: 0.5px solid var(--border-color);
+}
+
+.M-section-entry:last-child {
+    border-bottom: none;
+}
+
+.M-section-content {
+    height: 100%;
+    background-color: transparent;
+    border-width: 0;
+    border-radius: 10px;
+    padding-top: 25px;
+    padding-bottom: 25px;
+    padding-left: 3%;
+    padding-right: 3%;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.M-section-button {
+    width: 100%;
+    height: 100%;
+    background-color: transparent;
+    border-width: 0;
+    border-radius: 10px;
+    padding-top: 25px;
+    padding-bottom: 25px;
+    padding-left: 3%;
+    padding-right: 3%;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.M-section-button:hover {
+    background-color: var(--background-color)
+}
+
+.M-section-button-content {
+    display: flex;
+    flex-direction: row;
+    gap: 10px;
+}
+
+.M-section-text {
+    font-size: 20px;
+    max-width: 80%;
+}
+
+.M-input-container {
+    height: 40px;
+    width: 100%;
+    align-self: center;
+}
+
+.M-popup-text {
+    font-size: 24px;
+}
+
+.M-dropdown {
+    background-color: transparent;
+    border-width: 0;
+    border-bottom-color: var(--border-color);
+    border-bottom-width: 1px;
+    color: var(--text-color);
+    font-family: 'Poppins', sans-serif;
+    font-weight: 300;
+    font-size: 18px;
+}
+
+.M-card {
+    background-color: var(--foreground-color);
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+    width: 350px;
+    height: 300px;
+    box-shadow: 5px 5px 25px var(--shadow-color) inset;
+}
+
+.M-card-title {
+    font-size: 36px;
+    font-weight: 600;
+    padding-left: 15px;
+    padding-right: 15px;
+    text-align: center;
+    color: var(--text-color);
+}
+
+.M-card-value {
+    font-size: 64px;
+    font-weight: 100;
+    color: var(--text-color);
+}
+
+/* This class is not needed at this point */
+.M-table {
+    border-spacing: 0px;
+}
+
+.M-table-th {
+    padding-top: 25px;
+    padding-bottom: 25px;
+    padding-left: 3%;
+    padding-right: 3%;
+    text-align: left;
+    background-color: var(--foreground-color);
+    border: 1px solid var(--border-color);
+    border-width: 0;
+    border-bottom-width: 1px;
+}
+
+.M-table-td {
+    padding-top: 25px;
+    padding-bottom: 25px;
+    padding-left: 3%;
+    padding-right: 3%;
+    text-align: left;
+}
+
+.M-table-tr:nth-child(odd) {
+    background-color: var(--background-color);
+}
+
+.M-table-input {
+    width: 100%;
+    max-width: 250px;
+}

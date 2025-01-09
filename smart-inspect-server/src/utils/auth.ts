@@ -44,7 +44,7 @@ export function generateAccessToken(id: string, email: string, permissions: numb
 			accountVerified
 		},
 		'access',
-		'1hr'
+		'3hr' // TODO: Change this back to 1hr
 	);
 }
 

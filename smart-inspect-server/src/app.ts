@@ -9,8 +9,11 @@ import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import database from './config/db';
 import mail from './config/mail';
+import authRoute from './routes/authRoute';
 import usersRoute from './routes/usersRoute';
-import refreshRoute from './routes/refreshRoute';
+import projectsRoute from './routes/projectsRoute';
+import buildingsRoute from './routes/buildingsRoute';
+import inspectionsRoute from './routes/inspectionsRoute';
 
 async function main() {
 	const app = express();
@@ -35,23 +38,27 @@ async function main() {
 
 	// Database Connection
 	await database.connect();
+	await database.connectS3();
 	// Email Setup
 	await mail.setup();
 
 	// Test Routes
-	app.get('/', (req: Request, res: Response) => {
-		res.send('Hello World');
-	});
 	app.get('/api', (req: Request, res: Response) => {
-		res.json({ status: 'Connected to API' });
+		res.status(200).json({ message: 'Connected to API' });
 	});
 	app.get('/mongo', (req: Request, res: Response) => {
 		res.send(`MongoDB connected: ${database.isConnected()}`);
 	});
+	app.get('/s3', (req: Request, res: Response) => {
+		res.send(`S3 connected: ${database.isS3Connected()}`);
+	});
 
 	// Routes
-	app.use('/api/refresh', refreshRoute);
+	app.use('/api/auth', authRoute);
 	app.use('/api/users', usersRoute);
+	app.use('/api/buildings', buildingsRoute);
+	app.use('/api/projects', projectsRoute);
+	app.use('/api/inspections', inspectionsRoute);
 
 	app.listen(PORT, '0.0.0.0', () => {
 		console.log(`[APP] Server is running on http://localhost:${PORT}`);

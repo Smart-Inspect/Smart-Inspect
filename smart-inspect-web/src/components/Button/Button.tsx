@@ -2,7 +2,7 @@ import React from 'react';
 import styles from './Button.module.css';
 
 interface ButtonProps {
-    variant: 'primary'; // Add more variants here
+    variant: 'primary' | 'primary-outline' | 'secondary' | 'warning' | 'danger'; // Add more variants here
     type: 'button' | 'reset' | 'submit';
     children: React.ReactNode;
     name?: string;
@@ -13,8 +13,7 @@ interface ButtonProps {
     style?: object;
 }
 
-const Button: React.FC<ButtonProps> = ({ variant, name, type, children, id, onClick, disabled, className, style }) => {
-
+const Button: React.FC<ButtonProps> = ({ variant, name, type, children, id, onClick, disabled, className, style }: ButtonProps) => {
     return (
         <button
             name={name}
