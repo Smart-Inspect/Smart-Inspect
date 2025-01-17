@@ -1,8 +1,5 @@
 import type { Response } from 'express';
 import Building, { IBuilding } from '../models/Building';
-import Inspection from '../models/Inspection';
-import Project from '../models/Project';
-import Unit, { IUnit } from '../models/Unit';
 
 interface CreateParams {
 	name: string;
@@ -46,7 +43,14 @@ const buildingService = {
 	async view({ id }: ViewParams, res: Response): Promise<IBuilding | null> {
 		try {
 			// Check if the building exists
-			const existingBuilding = await Building.findOne({ _id: id }).exec();
+			const existingBuilding = await Building.findOne({ _id: id })
+				.populate({
+					path: 'units', // Populate the units
+					populate: {
+						path: 'inspections' // Populate the inspections within the units
+					}
+				})
+				.exec();
 			if (!existingBuilding) {
 				res.status(404).json({ error: 'Building not found' });
 				return null;
@@ -55,26 +59,6 @@ const buildingService = {
 		} catch (error) {
 			console.error(`Failed to get building ${id}:`, error);
 			res.status(500).json({ error: 'Error getting building' });
-			return null;
-		}
-	},
-	async viewUnits({ id }: ViewParams, res: Response): Promise<IUnit[] | null> {
-		try {
-			// Check if the building exists
-			const existingBuilding = await Building.findOne({ _id: id }).exec();
-			if (!existingBuilding) {
-				res.status(404).json({ error: 'Building not found' });
-				return null;
-			}
-			const units = await Unit.find({ building: id }).populate('inspections').exec();
-			if (!units) {
-				res.status(500).json({ error: 'Error getting building units' });
-				return null;
-			}
-			return units;
-		} catch (error) {
-			console.error(`Failed to get building ${id}'s units:`, error);
-			res.status(500).json({ error: 'Error getting building units' });
 			return null;
 		}
 	},
@@ -116,17 +100,13 @@ const buildingService = {
 	},
 	async delete({ id }: DeleteParams, res: Response): Promise<boolean> {
 		try {
-			// Delete the building
-			const result = await Building.deleteOne({ _id: id }).exec();
-			// Check if the building was deleted
-			if (result.deletedCount === 0) {
-				res.status(204).json({ error: 'Building not found' });
+			const existingBuilding = await Building.findOne({ _id: id }).exec();
+			if (!existingBuilding) {
+				res.status(404).json({ error: 'Building not found' });
 				return false;
 			}
-			// TODO: Delete all the building's projects and inspections
-			await Project.deleteMany({ building: id }).exec();
-			await Inspection.deleteMany({ project: id }).exec();
-
+			// Delete the building
+			await existingBuilding.deleteOne().exec();
 			return true;
 		} catch (error) {
 			console.error(`Failed to delete building ${id}:`, error);

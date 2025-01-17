@@ -304,13 +304,14 @@ const userService = {
 				res.status(403).json({ error: 'Permission denied' });
 				return false;
 			}
-			// Delete the user
-			const result = await User.deleteOne({ _id: id }).exec();
-			// Check if the user was deleted
-			if (result.deletedCount === 0) {
+			// Check if the user exists
+			const existingUser = await User.findOne({ _id: id }).exec();
+			if (!existingUser) {
 				res.status(404).json({ error: 'User not found' });
 				return false;
 			}
+			// Delete the user
+			await existingUser.deleteOne().exec();
 			return true;
 		} catch (error) {
 			console.error(`Failed to delete user ${id}:`, error);

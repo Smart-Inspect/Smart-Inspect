@@ -2,7 +2,8 @@ import type { Request, Response } from 'express';
 import Inspection from '../models/Inspection';
 import permissions from '../config/permissions';
 import { IImage } from '../models/Image';
-import imagesService from './imagesService';
+import imageService from './imagesService';
+import { ObjectId } from 'mongoose';
 
 interface ViewManyParams {
 	inspectionId: string;
@@ -10,7 +11,6 @@ interface ViewManyParams {
 
 interface UploadParams {
 	inspectionId: string;
-	timestamp: string;
 }
 
 interface DownloadParams {
@@ -37,24 +37,27 @@ const photoService = {
 			return null;
 		}
 	},
-	async upload({ inspectionId, timestamp }: UploadParams, req: Request, res: Response): Promise<IImage | null> {
+	async upload({ inspectionId }: UploadParams, req: Request, res: Response): Promise<IImage | null> {
 		try {
+			const images = res.locals.images;
+			if (!images) {
+				res.status(400).json({ error: 'No file(s) uploaded' });
+				return null;
+			}
 			const inspection = await Inspection.findOne({ _id: inspectionId }).populate('images').populate('engineer').exec();
 			if (!inspection) {
 				res.status(404).json({ error: 'Inspection not found' });
+				await imageService.deleteMany({ ids: (images as IImage[]).map(image => (image._id as ObjectId).toString()) }, res);
 				return null;
 			}
 			if (inspection.engineer !== req.user?._id && !req.user?.permissions.includes(permissions.MANAGER)) {
 				res.status(403).json({ error: 'Permission denied' });
+				await imageService.deleteMany({ ids: (images as IImage[]).map(image => (image._id as ObjectId).toString()) }, res);
 				return null;
 			}
-			const images = await imagesService.uploadMany({ allowedFileTypes: ['image/jpeg', 'image/jpg', 'image/png'], timestamps: [timestamp] }, req, res);
-			if (!images) {
-				return null;
-			}
-			(inspection.images as IImage[]).push(images[0]); // Only one image is uploaded at a time
+			(inspection.images as IImage[]).push(...images);
 			await inspection.save();
-			return images[0];
+			return images;
 		} catch (error) {
 			console.log(`Error uploading images for inspection ${inspectionId}:`, error);
 			res.status(500).json({ error: 'Error uploading image(s)' });
@@ -76,7 +79,7 @@ const photoService = {
 				res.status(403).json({ error: 'Permission denied' });
 				return false;
 			}
-			return await imagesService.download({ id: imageId }, res);
+			return await imageService.download({ id: imageId }, res);
 		} catch (error) {
 			console.log(`Error downloading image for inspection ${inspectionId}:`, error);
 			res.status(500).json({ error: 'Error downloading image' });

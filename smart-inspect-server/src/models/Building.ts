@@ -1,6 +1,6 @@
 import mongoose, { CallbackError, Document, Schema } from 'mongoose';
 import Project from './Project';
-import Unit from './Unit';
+import Unit, { IUnit } from './Unit';
 
 interface IAddress {
 	address: string;
@@ -11,6 +11,7 @@ export interface IBuilding extends Document {
 	name: string;
 	address: string;
 	addresses: IAddress[];
+	units: IUnit['_id'][];
 	createdAt: Date;
 	updatedAt: Date;
 }
@@ -27,7 +28,8 @@ const buildingSchema: Schema = new Schema(
 				}
 			],
 			required: false
-		}
+		},
+		units: [{ type: Schema.Types.ObjectId, ref: 'Unit', default: [] }]
 	},
 	{ timestamps: true }
 );
@@ -49,8 +51,10 @@ buildingSchema.pre<IBuilding>('save', function (next) {
 // Pre-delete hook to delete all projects and units associated with the building
 buildingSchema.pre('deleteOne', { document: true, query: false }, async function (next) {
 	try {
-		await Project.deleteMany({ building: this._id }).exec();
-		await Unit.deleteMany({ building: this._id }).exec();
+		const projects = await Project.find({ building: this._id });
+		await Project.deleteMany({ _id: { $in: projects } });
+		const units = await Unit.find({ building: this._id });
+		await Unit.deleteMany({ _id: { $in: units } });
 		next();
 	} catch (error) {
 		next(error as CallbackError);

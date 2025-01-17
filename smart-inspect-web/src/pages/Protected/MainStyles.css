@@ -27,6 +27,7 @@
     max-width: 1200px;
     margin: 0 auto;
     animation: fadeInUp 0.25s ease-in-out;
+    padding-bottom: 5px;
 }
 
 @keyframes fadeInUp {

@@ -23,6 +23,7 @@ export async function viewProject(req: Request, res: Response) {
 		name: project.name,
 		description: project.description,
 		building: project.building,
+		layouts: project.layouts,
 		units: project.units,
 		engineers: project.engineers,
 		inspections: project.inspections,
@@ -52,13 +53,7 @@ export async function deleteProject(req: Request, res: Response) {
 
 export async function uploadLayouts(req: Request, res: Response) {
 	const { id } = req.params;
-	const { uploadCount, timestamps } = req.body;
-	// I have to check this manually (without the middleware) because their are files attached to upload (form-data)
-	if (!uploadCount || !timestamps) {
-		res.status(400).json({ error: `Invalid request body` });
-		return;
-	}
-	const layout = await layoutService.uploadMany({ projectId: id, timestamps }, req, res);
+	const layout = await layoutService.uploadMany({ projectId: id }, req, res);
 	if (!layout) {
 		return;
 	}
@@ -72,15 +67,6 @@ export async function downloadLayout(req: Request, res: Response) {
 		return;
 	}
 	res.status(200).json(layout);
-}
-
-export async function viewLayouts(req: Request, res: Response) {
-	const { id } = req.params;
-	const layouts = await layoutService.viewMany({ projectId: id }, req, res);
-	if (!layouts) {
-		return;
-	}
-	res.status(200).json(layouts);
 }
 
 export async function deleteLayouts(req: Request, res: Response) {

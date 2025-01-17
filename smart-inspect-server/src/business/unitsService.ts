@@ -11,7 +11,7 @@ interface CreateManyParams {
 }
 
 interface DeleteManyParams {
-	ids: string[];
+	units: IUnit[];
 }
 
 interface AssignManyParams {
@@ -44,9 +44,18 @@ const unitService = {
 			return null;
 		}
 	},
-	async deleteMany({ ids }: DeleteManyParams, res: Response): Promise<boolean> {
+	async deleteMany({ units }: DeleteManyParams, res: Response): Promise<boolean> {
 		try {
-			await Unit.deleteMany({ _id: { $in: ids } }).exec();
+			// Only keep the units that have no inspection history (AKA they can be deleted safely)
+			const removedUnits = (units as IUnit[]).filter(unit => unit.inspections.length === 0);
+			if (removedUnits.length > 0) {
+				// Delete the removed units
+				const result = Unit.deleteMany({ _id: { $in: removedUnits } }).exec();
+				if (!result) {
+					res.status(500).json({ error: 'Error deleting units' });
+					return false;
+				}
+			}
 			return true;
 		} catch (error) {
 			console.error('Failed to delete units:', error);
@@ -58,7 +67,7 @@ const unitService = {
 		try {
 			const engineers = project.engineers as IUser[];
 			const units = project.units as IUnit[];
-			// Assigning units to engineers
+			// Assigning units (or rather inspections) to engineers
 			for (const { engineerId, unitNumbers } of engineerToUnits) {
 				const engineer = engineers.find(e => (e._id as string).toString() === engineerId);
 				if (!engineer) {

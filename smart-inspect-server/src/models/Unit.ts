@@ -26,7 +26,8 @@ unitSchema.index({ number: 1, building: 1 }, { unique: true });
 // Pre-delete hook to delete all inspections associated with the unit AND remove references to this unit from any projects
 unitSchema.pre('deleteOne', { document: true, query: false }, async function (next) {
 	try {
-		await Inspection.deleteMany({ unit: this._id }).exec();
+		const inspections = await Inspection.find({ unit: this._id });
+		await Inspection.deleteMany({ _id: { $in: inspections } }).exec();
 		await Project.updateMany({ units: this._id }, { $pull: { units: this._id } }).exec();
 		next();
 	} catch (error) {
@@ -37,8 +38,10 @@ unitSchema.pre('deleteOne', { document: true, query: false }, async function (ne
 unitSchema.pre('deleteMany', { document: false, query: true }, async function (next) {
 	try {
 		const filter = this.getFilter();
-		await Inspection.deleteMany({ unit: { $in: filter._id } }).exec();
-		await Project.updateMany({ units: { $in: filter._id } }, { $pull: { units: { $in: filter._id } } }).exec();
+		const units = filter._id.$in; // Extract the list of units
+		const inspectionIds = (await Inspection.find({ unit: { $in: units } })).map(inspection => inspection._id);
+		await Inspection.deleteMany({ _id: { $in: inspectionIds } }).exec();
+		await Project.updateMany({ units: { $in: units } }, { $pull: { units: { $in: units } } });
 		next();
 	} catch (error) {
 		next(error as CallbackError);

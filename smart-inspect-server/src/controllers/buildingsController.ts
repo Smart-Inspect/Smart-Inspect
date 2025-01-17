@@ -22,18 +22,10 @@ export async function viewBuilding(req: Request, res: Response) {
 		name: building.name,
 		address: building.address,
 		addresses: building.addresses,
+		units: building.units,
 		createdAt: building.createdAt,
 		updatedAt: building.updatedAt
 	});
-}
-
-export async function viewBuildingUnits(req: Request, res: Response) {
-	const { id } = req.params;
-	const units = await buildingService.viewUnits({ id }, res);
-	if (!units) {
-		return;
-	}
-	res.status(200).json(units);
 }
 
 export async function editBuilding(req: Request, res: Response) {

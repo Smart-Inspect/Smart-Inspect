@@ -24,22 +24,23 @@ class Database {
 
 	async connectS3() {
 		try {
-			const endpoint = new URL(process.env.DO_ENDPOINT as string);
 			this.s3Client = new S3Client({
-				endpoint: endpoint.href,
+				region: process.env.DO_REGION as string,
+				endpoint: process.env.DO_ENDPOINT as string,
 				credentials: {
 					accessKeyId: process.env.DO_ACCESS_KEY_ID as string,
 					secretAccessKey: process.env.DO_SECRET_ACCESS_KEY as string
 				}
 			});
-			console.log('[DB] S3 connected');
+			console.log('[DB] S3 client initialized');
 		} catch (error) {
-			console.error('[DB] S3 connection error:', error);
+			console.error('[DB] S3 client initialization error:', error);
 		}
 		try {
 			this.s3StorageOptions = multerS3({
 				s3: this.s3Client as S3Client,
 				bucket: process.env.DO_BUCKET as string,
+				contentType: multerS3.AUTO_CONTENT_TYPE,
 				acl: 'private',
 				metadata: function (req, file, cb) {
 					cb(null, {
@@ -47,7 +48,7 @@ class Database {
 						uploadedAt: new Date().toISOString()
 					});
 				},
-				key: function (req, file, cb) {
+				key: (req, file, cb) => {
 					const filePath = `uploads/${Date.now()}-${file.originalname}`;
 					cb(null, filePath);
 				}

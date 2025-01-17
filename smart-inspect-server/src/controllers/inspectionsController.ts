@@ -42,8 +42,7 @@ export async function deleteInspection(req: Request, res: Response) {
 
 export async function uploadPhoto(req: Request, res: Response) {
 	const { id } = req.params;
-	const { timestamp } = req.body;
-	const image = await photoService.upload({ inspectionId: id, timestamp }, req, res);
+	const image = await photoService.upload({ inspectionId: id }, req, res);
 	if (!image) {
 		return;
 	}

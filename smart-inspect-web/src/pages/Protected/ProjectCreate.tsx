@@ -90,23 +90,18 @@ function ProjectCreate() {
         if (selectedFiles) {
             console.log('Uploading layouts');
             const formData = new FormData();
-            for (const file of Array.from(selectedFiles)) {
-                formData.append('files', file);
-            }
+            Array.from(selectedFiles).forEach(file => formData.append('files', file));
             formData.append('uploadCount', selectedFiles.length.toString());
             const timestamps = Array.from(selectedFiles).map(() => new Date().toISOString());
             formData.append('timestamps', JSON.stringify(timestamps));
             setIsUploading(true);
 
-            console.log('FormData:', formData);
-
             const uploadResult = await projects.uploadLayouts(result.id, formData);
             if (!uploadResult) {
                 console.log('Failed to upload layouts');
-                setIsUploading(false);
-                return;
+            } else {
+                console.log('Layouts uploaded successfully');
             }
-            console.log('Layouts uploaded successfully');
         }
         goBack();
     };
@@ -193,7 +188,7 @@ function ProjectCreate() {
                     <span className='M-section-text M-text-color'>Back</span>
                 </div>
             </Button>
-            <form onSubmit={handleSubmit}>
+            <form onSubmit={handleSubmit} style={{ paddingBottom: 20 }}>
                 <h2 className='M-section-header' style={{ marginBottom: 30 }}>General Information</h2>
                 <p className='M-section-description M-text-color'>Please enter in the following information about the new project.</p>
                 <div className='M-section M-border-color' style={{ marginBottom: 50 }}>
@@ -254,7 +249,6 @@ function ProjectCreate() {
                                 id="layouts"
                                 onChange={(e) => { setSelectedFiles(e.target.files) }}
                                 multiple
-                                required
                                 accept="image/*"
                             />
                         </span>
@@ -313,7 +307,7 @@ function ProjectCreate() {
                         </div>
                     ))}
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 10, marginBottom: 40, gap: 20 }}>
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 20 }}>
                     <Button variant="secondary" type="submit" disabled={isUploading}>Submit</Button>
                     <Button variant="danger" type="button" onClick={goBack}>Cancel</Button>
                 </div>

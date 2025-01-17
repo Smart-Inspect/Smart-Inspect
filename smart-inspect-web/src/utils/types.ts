@@ -17,6 +17,7 @@ export interface IInspection {
   layout: string;
   notes: string;
   images: string[];
+  status: "completed" | "not-started";
 }
 
 export interface IUnit {
@@ -36,6 +37,7 @@ export interface IProject {
   units: IUnit[];
   engineers: IUser[];
   inspections: IInspection[];
+  status: "started" | "completed" | "not-started";
   createdAt: Date;
   updatedAt: Date;
 }
@@ -50,6 +52,17 @@ export interface IBuilding {
   name: string;
   address: string;
   addresses: IAddress[];
+  units: IUnit[];
   createdAt: Date;
   updatedAt: Date;
+}
+
+export interface IImage {
+  id: string;
+  name: string;
+  url: string; // The URL of the uploaded image in the cloud storage
+  type: string;
+  uploader: IUser;
+  timestamp: Date;
+  uploadedAt: Date;
 }

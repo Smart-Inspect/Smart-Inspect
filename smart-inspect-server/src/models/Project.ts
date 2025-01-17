@@ -2,14 +2,14 @@ import mongoose, { CallbackError, Document, Schema } from 'mongoose';
 import { IBuilding } from './Building';
 import { IUnit } from './Unit';
 import { IUser } from './User';
-import Image, { IImage } from './Image';
+import { IImage } from './Image';
 import Inspection, { IInspection } from './Inspection';
 
 export interface IProject extends Document {
 	name: string;
 	description: string;
 	building: IBuilding['_id'];
-	layouts: IImage[];
+	layouts: IImage['_id'][];
 	units: IUnit['_id'][];
 	engineers: IUser['_id'][];
 	inspections: IInspection['_id'][];
@@ -35,8 +35,8 @@ const projectSchema: Schema<IProject> = new Schema(
 // Pre-delete hook to delete all inspections associated with the project
 projectSchema.pre('deleteOne', { document: true, query: false }, async function (next) {
 	try {
-		await Inspection.deleteMany({ project: this._id }).exec();
-		await Image.deleteMany({ _id: { $in: this.layouts } }).exec(); // Deletes all layouts associated with the project
+		const inspections = await Inspection.find({ project: this._id });
+		await Inspection.deleteMany({ _id: { $in: inspections } }).exec();
 		next();
 	} catch (error) {
 		next(error as CallbackError);
@@ -46,8 +46,12 @@ projectSchema.pre('deleteOne', { document: true, query: false }, async function 
 projectSchema.pre('deleteMany', { document: false, query: true }, async function (next) {
 	try {
 		const filter = this.getFilter();
-		await Inspection.deleteMany({ project: { $in: filter._id } }).exec();
-		await Image.deleteMany({ _id: { $in: filter.layouts } }).exec(); // Deletes all layouts associated with the projects
+		const projectIds = filter._id ? filter._id.$in : []; // Extract the list of project IDs
+		if (projectIds.length === 0) {
+			return next();
+		}
+		const inspectionIds = (await Inspection.find({ project: { $in: projectIds } })).map(inspection => inspection._id);
+		await Inspection.deleteMany({ project: { $in: inspectionIds } });
 		next();
 	} catch (error) {
 		next(error as CallbackError);

@@ -1,12 +1,12 @@
 import type { Request, Response } from 'express';
 import Project, { IProject } from '../models/Project';
 import Building from '../models/Building';
-import { IUnit } from '../models/Unit';
 import User, { IUser } from '../models/User';
 import permissions from '../config/permissions';
 import unitService from './unitsService';
 import { IInspection } from '../models/Inspection';
 import inspectionService from './inspectionsService';
+import Unit, { IUnit } from '../models/Unit';
 
 interface CreateParams {
 	name: string;
@@ -132,15 +132,9 @@ const projectService = {
 					// Error message already sent
 					return null;
 				}
-				// If there were units removed, first filter out the ones that are no longer in unitNumbers (AKA the manager removed them) and have no inspection history (AKA they can be deleted safely)
-				const removedUnits = (existingProject.units as IUnit[]).filter(unit => !unitNumbers.includes(unit.number)).filter(unit => unit.inspections.length === 0);
-				if (removedUnits.length > 0) {
-					// Delete the removed units
-					const result = unitService.deleteMany({ ids: removedUnits.map(unit => unit._id) as string[] }, res);
-					if (!result) {
-						return null;
-					}
-				}
+				// If there were units removed, first filter out the ones that are no longer in the the passed unit numbers (AKA the manager removed them)
+				// Then, delete the removed units (if they have no inspection history)
+				unitService.deleteMany({ units: (existingProject.units as IUnit[]).filter(unit => !unitNumbers.includes(unit.number)) }, res);
 				existingProject.units = units;
 			}
 			if (engineerIds) {
@@ -190,11 +184,21 @@ const projectService = {
 	},
 	async delete({ id }: DeleteParams, res: Response): Promise<boolean> {
 		try {
-			// Delete the project
-			const result = await Project.deleteOne({ _id: id }).exec();
-			// Check if the project was deleted
-			if (result.deletedCount === 0) {
+			const existingProject = await Project.findOne({ _id: id }).populate('units').exec();
+			if (!existingProject) {
 				res.status(404).json({ error: 'Project not found' });
+				return false;
+			}
+			// Get the project units
+			const projectUnitIds = (existingProject.units as IUnit[]).map(unit => unit._id);
+			// Delete the project
+			await existingProject.deleteOne().exec();
+			// Re-get the project units (since each units' inspection history just changed)
+			const projectUnits = await Unit.find({ _id: { $in: projectUnitIds } }).exec();
+			// Delete the units of the project with no inspection history
+			const result = await unitService.deleteMany({ units: projectUnits }, res);
+			if (!result) {
+				// Error message already sent
 				return false;
 			}
 			return true;

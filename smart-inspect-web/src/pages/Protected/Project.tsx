@@ -1,70 +1,25 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import Button from '../../components/Button/Button';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { IoIosArrowBack } from 'react-icons/io';
 import Input from '../../components/Input/Input';
 import { useRequests } from '../../context/RequestsContext';
-import { IBuilding, IUser } from '../../utils/types';
+import { IBuilding, IInspection, IUnit, IUser } from '../../utils/types';
 
-function ProjectCreate() {
+function Project() {
     const navigate = useNavigate();
+    const { id } = useParams();
     const { buildings, users, projects } = useRequests();
     const [buildingsList, setBuildingsList] = useState<IBuilding[]>([]);
     const [engineerList, setEngineerList] = useState<IUser[]>([]);
     const [name, setName] = useState('');
     const [description, setDescription] = useState('');
     const [building, setBuilding] = useState<IBuilding>();
-    const [units, setUnits] = useState<number[]>([]);
     const [assignedEngineers, setAssignedEngineers] = useState<{ engineerId: string, unitNumbers: number[], unitSchema: string }[]>([]);
-
-    type RangeCondition = 'odds' | 'evens' | `step=${number}`;
-    const parseUnitPattern = (input: string): number[] => {
-        const regex = /(\d+)(?:-(\d+)(?::(odds|evens|step=\d+))?)?/g;
-        const results: number[] = [];
-
-        let match: RegExpExecArray | null;
-
-        while ((match = regex.exec(input)) !== null) {
-            const start = parseInt(match[1], 10);
-            const end = match[2] ? parseInt(match[2], 10) : start;
-            const condition = match[3] as RangeCondition | undefined;
-
-            if (start === end) {
-                results.push(start);
-            } else {
-                for (let i = start; i <= end; i++) {
-                    if (condition === 'odds' && i % 2 === 0) continue;
-                    if (condition === 'evens' && i % 2 !== 0) continue;
-                    if (condition?.startsWith('step=')) {
-                        const step = parseInt(condition.split('=')[1], 10);
-                        if ((i - start) % step !== 0) continue;
-                    }
-                    results.push(i);
-                }
-            }
-        }
-        return results;
-    }
-
-    const addEngineer = () => {
-        setAssignedEngineers([...assignedEngineers, { engineerId: engineerList[0].id, unitNumbers: [], unitSchema: '' }]);
-    }
-
-    const removeEngineer = (index: number) => {
-        setAssignedEngineers(prev => {
-            const newEngineers = [...prev];
-            newEngineers.splice(index, 1);
-            return newEngineers;
-        });
-    }
-
-    const updateEngineerData = (index: number, data: { engineerId: string, unitNumbers: number[], unitSchema: string }) => {
-        setAssignedEngineers(prev => {
-            const newEngineers = [...prev];
-            newEngineers[index] = data;
-            return newEngineers;
-        });
-    }
+    const [selectedFiles, setSelectedFiles] = useState<FileList | null>(null);
+    const [isUploading, setIsUploading] = useState(false);
+    const [duplicateUnitsFound, setDuplicateUnitsFound] = useState(false);
+    const [duplicateEngineersFound, setDuplicateEngineersFound] = useState(false);
 
     const viewAllBuildings = useCallback(async (abort: AbortController) => {
         const result = await buildings.viewAll(abort);
@@ -76,7 +31,7 @@ function ProjectCreate() {
             return;
         }
         setBuildingsList(result);
-        console.log('Buildings fetched successfully');
+        console.log('Users fetched successfully');
     }, [buildings]);
 
     const viewAllEngineers = useCallback(async (abort: AbortController) => {
@@ -93,7 +48,10 @@ function ProjectCreate() {
     }, [users]);
 
     const viewProject = useCallback(async (abort: AbortController) => {
-        const result = await projects.view('id', abort);
+        if (!id) {
+            return;
+        }
+        const result = await projects.view(id, abort);
         if (result === 'abort') {
             return;
         }
@@ -104,28 +62,37 @@ function ProjectCreate() {
         setName(result.name);
         setDescription(result.description);
         setBuilding(result.building);
-        setUnits(result.units.map(Number));
+
+        const aEs = result.engineers.map((engineer: IUser) => ({ engineerId: engineer.id, unitNumbers: [], unitSchema: '' }));
+        for (let i = 0; i < aEs.length; i++) {
+            const engineer = aEs[i];
+            const inspections = result.inspections.filter((inspection: IInspection) => inspection.engineer === engineer.engineerId);
+            const units = result.units.filter((unit: IUnit) => inspections.map((inspection: IInspection) => inspection.unit).includes(unit.id));
+            engineer.unitNumbers = units.map((unit: IUnit) => unit.number);
+            engineer.unitSchema = engineer.unitNumbers.join(', ');
+        }
+        setAssignedEngineers(aEs);
         console.log('Project fetched successfully');
-    }, [projects]);
+    }, [id, projects]);
 
     useEffect(() => {
         const controller = new AbortController();
-        viewProject(controller);
         viewAllBuildings(controller);
         viewAllEngineers(controller);
+        viewProject(controller);
         return () => {
             controller.abort();
         }
     }, [viewAllBuildings, viewAllEngineers, viewProject]);
 
     const goBack = () => {
-        navigate('/auth/projects');
+        navigate(-1);
     };
 
     return (
         <div className='M-container'>
             {/* Title */}
-            <h1 className='M-title'>Creating New Project</h1>
+            <h1 className='M-title'>Project: {name}</h1>
             {/* Project Info */}
             <Button variant="danger" type="button" onClick={goBack} style={{ marginTop: 40, marginBottom: 15 }}>
                 <div className="M-section-button-content">
@@ -150,7 +117,7 @@ function ProjectCreate() {
                 <div className='M-section-entry'>
                     <span className='M-section-content' >
                         <span className='M-section-text M-text-color'>Building</span>
-                        <span className='M-section-text M-text-color'>{building?.name}</span>
+                        <span className='M-section-text M-text-color'>{building?.name}, {building?.address}</span>
                     </span>
                 </div>
             </div>
@@ -158,20 +125,24 @@ function ProjectCreate() {
             <div className='M-section M-border-color' style={{ marginBottom: 50 }}>
                 <div className='M-section-entry'>
                     <span className='M-section-content'>
-                        <span className='M-section-text M-text-color'>Layouts</span>
                         <label htmlFor="layouts" className='hidden-label'>Layouts</label>
-                        <Input
-                            variant='secondary'
-                            type="file"
-                            id="layouts"
-                            multiple
-                            required
-                        />
+                        <span id='layouts' className='M-section-text M-text-color'>Layouts</span>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 30 }}>
+
+                        </div>
                     </span>
+                </div>
+            </div>
+            <h2 className='M-section-header' style={{ marginBottom: 30 }}>Units and Engineers</h2>
+            <div className='M-section M-border-color' style={{ marginBottom: 25 }}>
+                <div className='M-section-entry' style={{ marginBottom: 15, marginTop: 25, paddingLeft: '3%', paddingRight: '3%' }}>
+                    <span className='M-section-text M-text-color' style={{ display: 'flex', flexDirection: 'column', marginBottom: 10 }}>Units that have been assigned:<br style={{ marginTop: 10 }} />{assignedEngineers.map((assignedEngineer, _) => (
+                        <span className='M-text-color'>{engineerList.filter(engineer => engineer.id === assignedEngineer.engineerId)[0].firstName} {engineerList.filter(engineer => engineer.id === assignedEngineer.engineerId)[0].lastName}: {assignedEngineer.unitNumbers.join(', ')}</span>
+                    ))}<br style={{ marginTop: 10 }} />Total Units: {assignedEngineers.reduce((acc, curr) => acc + curr.unitNumbers.length, 0)}</span>
                 </div>
             </div>
         </div>
     );
 };
 
-export default ProjectCreate;
+export default Project;

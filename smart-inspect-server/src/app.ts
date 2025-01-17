@@ -40,7 +40,7 @@ async function main() {
 	await database.connect();
 	await database.connectS3();
 	// Email Setup
-	await mail.setup();
+	//await mail.setup();
 
 	// Test Routes
 	app.get('/api', (req: Request, res: Response) => {

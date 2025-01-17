@@ -149,13 +149,13 @@ const inspectionService = {
 	},
 	async delete({ id }: ViewParams, res: Response): Promise<boolean> {
 		try {
-			// Deleting the inspection
-			const result = await Inspection.deleteOne({ _id: id });
-			// Checking if the inspection was deleted
-			if (result.deletedCount !== 1) {
+			const existingInspection = await Inspection.findOne({ _id: id }).exec();
+			if (!existingInspection) {
 				res.status(404).json({ error: 'Inspection not found' });
 				return false;
 			}
+			// Deleting the inspection
+			await existingInspection.deleteOne().exec();
 			return true;
 		} catch (error) {
 			console.log(`Error deleting inspection ${id}:`, error);
