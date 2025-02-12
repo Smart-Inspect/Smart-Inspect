@@ -118,7 +118,7 @@ export const ColorProvider = ({ children }: { children: ReactNode }) => {
 export const useColor = () => {
     const context = useContext(ColorContext);
     if (context === undefined) {
-        throw new Error('useColor must be used within an APIProvider');
+        throw new Error('useColor must be used within a ColorProvider');
     }
     return context;
 }

@@ -11,3 +11,119 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+
+/* Default color scheme variables (for system preference) */
+:root {
+  /* Light mode */
+  --background-color-light: #f0f0f0;
+  --foreground-color-light: #ffffff;
+  --text-color-light: #053331;
+  --text-warning-light: #cdc40f;
+  --text-danger-light: #911111;
+  --border-color-light: #053331;
+  --border-warning-light: #cdc40f;
+  --border-danger-light: #911111;
+  --shadow-color-light: rgba(5, 51, 49, 0.45);
+  --header-color-light: #ffffff;
+  --header-tint-color-light: #053331;
+  --sidebar-color-light: #ffffff;
+  --sidebar-active-tint-color-light: #053331;
+  --sidebar-inactive-tint-color-light: #666;
+  --icon-color-light: #053331;
+  --button-secondary-light: rgba(5, 51, 49, 0.45);
+  --button-secondary-hover-light: rgba(5, 51, 49, 0.65);
+  --button-warning-light: rgba(205, 196, 15, 0.45);
+  --button-warning-hover-light: rgba(205, 196, 15, 0.65);
+  --button-danger-light: rgba(145, 17, 17, 0.45);
+  --button-danger-hover-light: rgba(145, 17, 17, 0.65);
+
+  /* Dark mode */
+  --background-color-dark: #010a19;
+  --foreground-color-dark: #131821;
+  --text-color-dark: #f0f6fc;
+  --text-warning-dark: #ffdb4f;
+  --text-danger-dark: #c93636;
+  --border-color-dark: #f0f6fc;
+  --border-warning-dark: #ffdb4f;
+  --border-danger-dark: #c93636;
+  --shadow-color-dark: rgba(240, 246, 252, 0.45);
+  --header-color-dark: #131821;
+  --header-tint-color-dark: #f0f6fc;
+  --sidebar-color-dark: #131821;
+  --sidebar-active-tint-color-dark: #f0f6fc;
+  --sidebar-inactive-tint-color-dark: #999;
+  --icon-color-dark: #f0f6fc;
+  --button-secondary-dark: rgba(240, 246, 252, 0.45);
+  --button-secondary-hover-dark: rgba(240, 246, 252, 0.65);
+  --button-warning-dark: rgba(255, 255, 0, 0.45);
+  --button-warning-hover-dark: rgba(255, 255, 0, 0.65);
+  --button-danger-dark: rgba(201, 54, 54, 0.45);
+  --button-danger-hover-dark: rgba(201, 54, 54, 0.65);
+}
+
+body.light {
+  --background-color: var(--background-color-light);
+  --foreground-color: var(--foreground-color-light);
+  --text-color: var(--text-color-light);
+  --text-warning: var(--text-warning-light);
+  --text-danger: var(--text-danger-light);
+  --border-color: var(--border-color-light);
+  --border-warning: var(--border-warning-light);
+  --border-danger: var(--border-danger-light);
+  --shadow-color: var(--shadow-color-light);
+  --header-color: var(--header-color-light);
+  --header-tint-color: var(--header-tint-color-light);
+  --sidebar-color: var(--sidebar-color-light);
+  --sidebar-active-tint-color: var(--sidebar-active-tint-color-light);
+  --sidebar-inactive-tint-color: var(--sidebar-inactive-tint-color-light);
+  --icon-color: var(--icon-color-light);
+  --button-secondary: var(--button-secondary-light);
+  --button-secondary-hover: var(--button-secondary-hover-light);
+  --button-warning: var(--button-warning-light);
+  --button-warning-hover: var(--button-warning-hover-light);
+  --button-danger: var(--button-danger-light);
+  --button-danger-hover: var(--button-danger-hover-light);
+}
+
+body.dark {
+  --background-color: var(--background-color-dark);
+  --foreground-color: var(--foreground-color-dark);
+  --text-color: var(--text-color-dark);
+  --text-warning: var(--text-warning-dark);
+  --text-danger: var(--text-danger-dark);
+  --border-color: var(--border-color-dark);
+  --border-warning: var(--border-warning-dark);
+  --border-danger: var(--border-danger-dark);
+  --shadow-color: var(--shadow-color-dark);
+  --header-color: var(--header-color-dark);
+  --header-tint-color: var(--header-tint-color-dark);
+  --sidebar-color: var(--sidebar-color-dark);
+  --sidebar-active-tint-color: var(--sidebar-active-tint-color-dark);
+  --sidebar-inactive-tint-color: var(--sidebar-inactive-tint-color-dark);
+  --icon-color: var(--icon-color-dark);
+  --button-secondary: var(--button-secondary-dark);
+  --button-secondary-hover: var(--button-secondary-hover-dark);
+  --button-warning: var(--button-warning-dark);
+  --button-warning-hover: var(--button-warning-hover-dark);
+  --button-danger: var(--button-danger-dark);
+  --button-danger-hover: var(--button-danger-hover-dark);
+}
+
+body.main {
+  background-color: var(--background-color);
+}
+
+body.login {
+  background-color: #20575a;
+}
+
+.hidden-label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+}

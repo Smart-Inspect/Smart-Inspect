@@ -23,6 +23,7 @@ export function authenticate(req: Request, res: Response, next: NextFunction): v
 	next();
 }
 
+// NOTE: This middleware can ONLY be used after the authenticate middleware (because it uses req.user)
 export function isVerified(req: Request, res: Response, next: NextFunction): void {
 	// Check if the user is verified
 	if (!req.user?.accountVerified) {
@@ -32,6 +33,7 @@ export function isVerified(req: Request, res: Response, next: NextFunction): voi
 	next();
 }
 
+// NOTE: This middleware can ONLY be used after the authenticate middleware (because it uses req.user)
 export function authorize(...permissions: number[]) {
 	return (req: Request, res: Response, next: NextFunction): void => {
 		// Check if the permissions are present in the payload

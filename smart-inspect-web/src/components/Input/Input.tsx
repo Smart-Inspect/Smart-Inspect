@@ -3,7 +3,7 @@ import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import styles from './Input.module.css';
 
 interface InputProps {
-    variant: 'primary'; // Add more variants here
+    variant: 'primary' | 'secondary'; // Add more variants here
     type: 'button' | 'checkbox' | 'color' | 'date' | 'datetime-local' | 'email' | 'file' | 'hidden' | 'image' | 'month' | 'number' | 'password' | 'radio' | 'range' | 'reset' | 'search' | 'submit' | 'tel' | 'text' | 'time' | 'url' | 'week';
     id?: string;
     value?: string;
@@ -12,9 +12,12 @@ interface InputProps {
     className?: string;
     style?: object;
     required?: boolean;
+    multiple?: boolean;
+    accept?: string;
+    forceWhite?: boolean; // This is to fix a bug on the login/signup pages where the eye icon stays black
 }
 
-const Input: React.FC<InputProps> = ({ variant, type, id, value, onChange, placeholder, className, style, required }) => {
+const Input: React.FC<InputProps> = ({ variant, type, id, value, onChange, placeholder, className, style, required, multiple, accept, forceWhite }) => {
     const [passwordHidden, setPasswordHidden] = useState(true);
     const [typeWithPassword, setTypeWithPassword] = useState(type);
 
@@ -34,18 +37,18 @@ const Input: React.FC<InputProps> = ({ variant, type, id, value, onChange, place
                 style={style}
                 required={required}
                 className={`${styles[variant]} ${className}`}
+                multiple={multiple}
+                accept={accept ? accept : 'image/*'}
             />
             {
                 type === 'password' ? (
-                    <button onClick={handlePasswordVisibility} className={styles['eye-icon']}>
-                        {passwordHidden ? <FaEye size={15} color="#fff" /> : <FaEyeSlash size={15} color="#fff" />}
+                    <button onClick={handlePasswordVisibility} className={styles['eye-icon-button']} type='button'>
+                        {passwordHidden ? <FaEye size={15} className={document.body.classList.contains('login') || forceWhite ? styles['eye-icon-login'] : styles['eye-icon-main']} /> : <FaEyeSlash size={15} className={document.body.classList.contains('login') ? styles['eye-icon-login'] : styles['eye-icon-main']} />}
                     </button>
                 ) : <></>
             }
         </div>
     );
 };
-
-//style={{ marginTop: -58, marginLeft: 285 }}
 
 export default Input;

@@ -15,7 +15,7 @@ const emails = {
 			email,
 			'Smart Inspect Password Reset',
 			undefined,
-			`<h3>Reset your Smart Inspect password</h3><p>To reset your password, please click the following link:</p><p><a href="${process.env.WEB_URL}/password-reset/${token}">${process.env.WEB_URL}/password-reset/${token}</a></p>`
+			`<h3>Reset your Smart Inspect password</h3><p>To reset your password, please click the following link:</p><p><a href="${process.env.WEB_URL}/reset-password/${token}">${process.env.WEB_URL}/reset-password/${token}</a></p>`
 		);
 	}
 };
