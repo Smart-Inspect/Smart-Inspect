@@ -1,10 +1,10 @@
 import type { Request, Response } from 'express';
-import Project, { IProject } from '../models/Project';
+import Project, { IMetricsSchema, IProject } from '../models/Project';
 import Building from '../models/Building';
 import User, { IUser } from '../models/User';
 import permissions from '../config/permissions';
 import unitService from './unitsService';
-import { IInspection } from '../models/Inspection';
+import Inspection, { IInspection } from '../models/Inspection';
 import inspectionService from './inspectionsService';
 import Unit, { IUnit } from '../models/Unit';
 
@@ -15,6 +15,7 @@ interface CreateParams {
 	unitNumbers: string[];
 	engineerIds: string[];
 	engineerToUnits: { engineerId: string; unitNumbers: string[] }[];
+	metricsSchema: IMetricsSchema[];
 }
 
 interface ViewParams {
@@ -33,6 +34,7 @@ interface EditParams {
 	engineerIds?: string[];
 	status?: 'started' | 'completed' | 'not-started';
 	engineerToUnits?: { engineerId: string; unitNumbers: string[] }[];
+	metricsSchema?: IMetricsSchema[];
 }
 
 interface DeleteParams {
@@ -40,7 +42,7 @@ interface DeleteParams {
 }
 
 const projectService = {
-	async create({ name, description, buildingId, unitNumbers, engineerIds, engineerToUnits }: CreateParams, res: Response): Promise<IProject | null> {
+	async create({ name, description, buildingId, unitNumbers, engineerIds, engineerToUnits, metricsSchema }: CreateParams, res: Response): Promise<IProject | null> {
 		try {
 			// Getting the building
 			const building = await Building.findOne({ _id: buildingId }).exec();
@@ -65,8 +67,17 @@ const projectService = {
 				return null;
 			}
 			newProject.engineers = engineers;
+			// Check if there are duplicate names in the metrics schema
+			const metricNames = metricsSchema.map(metric => metric.name);
+			const duplicateMetricNames = metricNames.filter((name, index) => metricNames.indexOf(name) !== index);
+			if (duplicateMetricNames.length > 0) {
+				res.status(400).json({ error: 'Duplicate metric names found in metrics schema' });
+				return null;
+			}
+			// Assign metrics schema to project
+			newProject.metricsSchema = metricsSchema;
 			// Assigning units to engineers
-			const result = await unitService.assignMany({ project: newProject, engineerToUnits }, res);
+			const result = await unitService.assignMany({ project: newProject, engineerToUnits, oldMetricsSchema: undefined, newMetricsSchema: metricsSchema }, res);
 			if (!result) {
 				return null;
 			}
@@ -82,7 +93,7 @@ const projectService = {
 	async view({ id }: ViewParams, req: Request, res: Response): Promise<IProject | null> {
 		try {
 			// Check if the project exists
-			const existingProject = await Project.findOne({ _id: id }).populate('building').populate('units').populate('engineers').populate('inspections').exec();
+			const existingProject = await Project.findOne({ _id: id }).populate('building').populate('units').populate('engineers').populate('inspections').populate('layouts').exec();
 			if (!existingProject) {
 				res.status(404).json({ error: 'Project not found' });
 				return null;
@@ -115,7 +126,7 @@ const projectService = {
 			return null;
 		}
 	},
-	async edit({ id, name, description, unitNumbers, engineerIds, status, engineerToUnits }: EditParams, res: Response): Promise<IProject | null> {
+	async edit({ id, name, description, unitNumbers, engineerIds, status, engineerToUnits, metricsSchema }: EditParams, res: Response): Promise<IProject | null> {
 		try {
 			// Check if the project exists
 			const existingProject = await Project.findOne({ _id: id }).populate('units').populate('engineers').exec();
@@ -132,32 +143,55 @@ const projectService = {
 					// Error message already sent
 					return null;
 				}
+				// NOTE: This code is disgusting I know, but it works so it's not a priority to refactor for now
+				// TODO: Make this code cleaner
 				// If there were units removed, first filter out the ones that are no longer in the the passed unit numbers (AKA the manager removed them)
-				// Then, delete the removed units (if they have no inspection history)
-				unitService.deleteMany({ units: (existingProject.units as IUnit[]).filter(unit => !unitNumbers.includes(unit.number)) }, res);
+				const removedUnits = (existingProject.units as IUnit[]).filter(unit => !unitNumbers.includes(unit.number));
+				const removedUnitInspections = [] as IInspection[];
+				// For each removed unit, get its inspections and push them to the removedUnitInspections array
+				for (const removedUnit of removedUnits) {
+					const inspections = (await Inspection.find({ unit: removedUnit._id }).exec()) as IInspection[];
+					removedUnitInspections.push(...inspections);
+				}
+				// Delete the removed inspections
+				const inspectionResult = await inspectionService.deleteMany({ ids: removedUnitInspections.map(inspection => inspection._id) as string[] }, res);
+				if (!inspectionResult) {
+					// Error message already sent
+					return null;
+				}
+				// Re-get the project units (since many units' inspection history just changed)
+				const reFetchedUnits = await Unit.find({ _id: { $in: removedUnits.map(unit => unit._id) } }).exec();
+				// Then, delete the removed units (if they have no longer have an inspection history)
+				const unitResult = await unitService.deleteMany({ units: reFetchedUnits }, res);
+				if (!unitResult) {
+					// Error message already sent
+					return null;
+				}
 				existingProject.units = units;
 			}
 			if (engineerIds) {
 				// TODO: Come back and turn this into a function in the usersService
 				const engineers = await User.find({ _id: { $in: engineerIds }, permissions: { $in: [permissions.ENGINEER] } })
-					.populate('assignedInspections')
+					//.populate('assignedInspections')
 					.exec();
 				if (engineers.length !== engineerIds.length) {
 					res.status(404).json({ error: 'Engineer(s) not found' });
 					return null;
 				}
 				// If there were engineers removed, filter out the ones that are no longer in engineerIds (AKA the manager removed them)
-				const removedEngineers = (existingProject.engineers as IUser[]).filter(engineer => !engineerIds.includes(engineer._id as string));
+				const removedEngineers = (existingProject.engineers as IUser[]).filter(engineer => !engineerIds.includes((engineer._id as string).toString()));
 				if (removedEngineers.length > 0) {
 					const deletedInspections = [] as IInspection[];
 					// For each removed engineer, get their assigned inspections for this project and push them to the deletedInspections array
 					for (const engineer of removedEngineers) {
-						const inspections = (engineer.assignedInspections as IInspection[]).filter(inspection => inspection.project === id);
+						const inspections = (await Inspection.find({ engineer: engineer._id, project: id }).exec()) as IInspection[];
+						//const inspections = (engineer.assignedInspections as IInspection[]).filter(inspection => inspection.project === id);
 						deletedInspections.push(...inspections);
 					}
 					// Delete the removed inspections
-					const result = inspectionService.deleteMany({ ids: deletedInspections.map(inspection => inspection._id) as string[] }, res);
+					const result = await inspectionService.deleteMany({ ids: deletedInspections.map(inspection => inspection._id) as string[] }, res);
 					if (!result) {
+						// Error message already sent
 						return null;
 					}
 				}
@@ -169,9 +203,27 @@ const projectService = {
 				res.status(400).json({ error: 'Invalid status' });
 				return null;
 			}
+			// Update the metrics schema
+			// NOTE: This needs to come before re-assigning the units/inspections because it needs to make sure there are no duplicate metric names
+			const oldMetricsSchema = existingProject.metricsSchema;
+			if (metricsSchema) {
+				// Check if there are duplicate names in the metrics schema
+				const metricNames = metricsSchema.map(metric => metric.name);
+				const duplicateMetricNames = metricNames.filter((name, index) => metricNames.indexOf(name) !== index);
+				if (duplicateMetricNames.length > 0) {
+					res.status(400).json({ error: 'Duplicate metric names found in metrics schema' });
+					return null;
+				}
+				// Assign metrics schema to project
+				existingProject.metricsSchema = metricsSchema;
+			}
 			// Assigning units to engineers
 			if (engineerToUnits) {
-				unitService.assignMany({ project: existingProject, engineerToUnits }, res);
+				const result = await unitService.assignMany({ project: existingProject, engineerToUnits, oldMetricsSchema, newMetricsSchema: metricsSchema }, res);
+				if (!result) {
+					// Error message already sent
+					return null;
+				}
 			}
 			// Save the project
 			await existingProject.save();
@@ -195,6 +247,10 @@ const projectService = {
 			await existingProject.deleteOne().exec();
 			// Re-get the project units (since each units' inspection history just changed)
 			const projectUnits = await Unit.find({ _id: { $in: projectUnitIds } }).exec();
+			if (projectUnits.length !== projectUnitIds.length) {
+				res.status(500).json({ error: 'Error deleting updating units on project' });
+				return false;
+			}
 			// Delete the units of the project with no inspection history
 			const result = await unitService.deleteMany({ units: projectUnits }, res);
 			if (!result) {

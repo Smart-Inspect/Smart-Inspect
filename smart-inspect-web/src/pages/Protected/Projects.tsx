@@ -13,16 +13,20 @@ function Projects() {
     const [filteredProjects, setFilteredProjects] = useState<IProject[]>(projectsList);
     const [nameSearchQuery, setNameSearchQuery] = useState('');
     const [buildingSearchQuery, setBuildingSearchQuery] = useState('');
+    const [statusSearchQuery, setStatusSearchQuery] = useState('');
     const [deleteProjectPopupVisible, setDeleteProjectPopupVisible] = useState(false);
     const [projectToDelete, setProjectToDelete] = useState<IProject | null>(null);
 
-    const handleSearch = (catagory: 'name' | 'building', query: string) => {
+    const handleSearch = (catagory: 'name' | 'building' | 'status', query: string) => {
         switch (catagory) {
             case 'name':
                 setNameSearchQuery(query);
                 break;
             case 'building':
                 setBuildingSearchQuery(query);
+                break;
+            case 'status':
+                setStatusSearchQuery(query);
                 break;
             default:
                 return;
@@ -33,6 +37,8 @@ function Projects() {
                     return item.name.toLowerCase().includes(query.toLowerCase());
                 case 'building':
                     return item.building.name.toLowerCase().includes(query.toLowerCase());
+                case 'status':
+                    return item.status.toLowerCase() === query.toLowerCase();
                 default:
                     return false;
             }
@@ -106,12 +112,13 @@ function Projects() {
                     <tr className='M-table-tr'>
                         <th className='M-table-th M-section-header M-text-color'>Project Name</th>
                         <th className='M-table-th M-section-header M-text-color'>Building</th>
+                        <th className='M-table-th M-section-header M-text-color'>Status</th>
                         <th className='M-table-th M-section-header M-text-color'>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr className='M-table-tr'>
-                        <td className='M-table-td M-section-header M-text-color'>
+                        <td className='M-table-td M-section-header M-text-color' style={{ maxWidth: 225 }}>
                             <label htmlFor="name" className='hidden-label'>Project Name</label>
                             <Input
                                 variant='secondary'
@@ -124,7 +131,7 @@ function Projects() {
                                 className='M-table-input'
                             />
                         </td>
-                        <td className='M-table-td M-section-header M-text-color'>
+                        <td className='M-table-td M-section-header M-text-color' style={{ maxWidth: 225 }}>
                             <label htmlFor="building" className='hidden-label'>Building</label>
                             <Input
                                 variant='secondary'
@@ -137,6 +144,16 @@ function Projects() {
                                 className='M-table-input'
                             />
                         </td>
+                        <td className='M-table-td M-section-header M-text-color' style={{ maxWidth: 225 }}>
+                            <label htmlFor="status" className='hidden-label'>Status</label>
+                            <select name="status" id="status" className="M-dropdown" required onChange={(e) => { handleSearch('status', e.target.value) }}>
+                                <option value="" disabled className="M-section-text M-text-color">Sort by status...</option>
+                                <option value="" className="M-section-text M-text-color" selected={statusSearchQuery === ''}>All</option>
+                                <option value="completed" className="M-section-text M-text-color" selected={statusSearchQuery === 'completed'}>Completed</option>
+                                <option value="started" className="M-section-text M-text-color" selected={statusSearchQuery === 'started'}>Started</option>
+                                <option value="not-started" className="M-section-text M-text-color" selected={statusSearchQuery === 'not-started'}>Not Started</option>
+                            </select>
+                        </td>
                         <td className='M-table-td' style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
                             <Button variant="warning" type="button" onClick={() => { navigate('/auth/projects/create') }} style={{ width: 160 }}>Add Project</Button>
                         </td>
@@ -145,6 +162,7 @@ function Projects() {
                         <tr className='M-table-tr'>
                             <td className='M-table-td M-section-text M-text-color'>{project.name}</td>
                             <td className='M-table-td M-section-text M-text-color'>{project.building.name}</td>
+                            <td className='M-table-td M-section-text M-text-color'>{project.status === 'completed' ? 'Completed' : project.status === 'started' ? 'Started' : 'Not Started'}</td>
                             <td className='M-table-td' style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
                                 <Button variant="secondary" type="button" onClick={() => { navigate(`/auth/projects/${project.id}`) }} style={{ width: 80 }}>View</Button>
                                 <Button variant="danger" type="button" onClick={() => { setProjectToDelete(project); setDeleteProjectPopupVisible(true); }} style={{ width: 100 }}>Delete</Button>

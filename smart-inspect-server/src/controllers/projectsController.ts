@@ -4,8 +4,8 @@ import projectService from '../business/projectsService';
 import layoutService from '../business/layoutsService';
 
 export async function createProject(req: Request, res: Response): Promise<void> {
-	const { name, description, buildingId, unitNumbers, engineerIds, engineerToUnits } = req.body;
-	const project = await projectService.create({ name, description, buildingId, unitNumbers, engineerIds, engineerToUnits }, res);
+	const { name, description, buildingId, unitNumbers, engineerIds, engineerToUnits, metricsSchema } = req.body;
+	const project = await projectService.create({ name, description, buildingId, unitNumbers, engineerIds, engineerToUnits, metricsSchema }, res);
 	if (!project) {
 		return;
 	}
@@ -27,6 +27,8 @@ export async function viewProject(req: Request, res: Response) {
 		units: project.units,
 		engineers: project.engineers,
 		inspections: project.inspections,
+		metricsSchema: project.metricsSchema,
+		status: project.status,
 		createdAt: project.createdAt,
 		updatedAt: project.updatedAt
 	});
@@ -34,8 +36,8 @@ export async function viewProject(req: Request, res: Response) {
 
 export async function editProject(req: Request, res: Response) {
 	const { id } = req.params;
-	const { name, description, unitNumbers, engineerIds, status, engineerToUnits } = req.body;
-	const project = await projectService.edit({ id, name, description, unitNumbers, engineerIds, status, engineerToUnits }, res);
+	const { name, description, unitNumbers, engineerIds, status, engineerToUnits, metricsSchema } = req.body;
+	const project = await projectService.edit({ id, name, description, unitNumbers, engineerIds, status, engineerToUnits, metricsSchema }, res);
 	if (!project) {
 		return;
 	}
@@ -66,13 +68,12 @@ export async function downloadLayout(req: Request, res: Response) {
 	if (!layout) {
 		return;
 	}
-	res.status(200).json(layout);
 }
 
 export async function deleteLayouts(req: Request, res: Response) {
 	const { id } = req.params;
 	const { layoutIds } = req.body;
-	const result = await layoutService.deleteMany({ projectId: id, ids: layoutIds }, res);
+	const result = await layoutService.deleteMany({ projectId: id, layoutIds }, res);
 	if (!result) {
 		return;
 	}
@@ -92,7 +93,7 @@ export async function viewAllProjects(req: Request, res: Response) {
 	try {
 		// Get all projects
 		// Only populating the building field for now
-		const projects = await Project.find({}, 'name description building units engineers inspections createdAt updatedAt').populate('building').exec();
+		const projects = await Project.find({}, 'name description building units engineers inspections metricsSchema status createdAt updatedAt').populate('building').exec();
 		res.status(200).json(projects);
 	} catch (error) {
 		console.error('Failed to get projects:', error);

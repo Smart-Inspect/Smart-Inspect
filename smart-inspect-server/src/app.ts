@@ -14,6 +14,7 @@ import usersRoute from './routes/usersRoute';
 import projectsRoute from './routes/projectsRoute';
 import buildingsRoute from './routes/buildingsRoute';
 import inspectionsRoute from './routes/inspectionsRoute';
+import unitsRoute from './routes/unitsRoute';
 
 async function main() {
 	const app = express();
@@ -23,6 +24,7 @@ async function main() {
 	app.use(express.json());
 	app.use(cookieParser());
 	// Set up CORS for development
+	// TODO: FIX CORS FOR PRODUCTION OR REMOVE IT
 	if (BUILD_TYPE === 'development') {
 		console.log('[APP] Setting up CORS for development');
 		const corsOptions = {
@@ -40,7 +42,7 @@ async function main() {
 	await database.connect();
 	await database.connectS3();
 	// Email Setup
-	//await mail.setup();
+	await mail.setup();
 
 	// Test Routes
 	app.get('/api', (req: Request, res: Response) => {
@@ -59,6 +61,7 @@ async function main() {
 	app.use('/api/buildings', buildingsRoute);
 	app.use('/api/projects', projectsRoute);
 	app.use('/api/inspections', inspectionsRoute);
+	app.use('/api/units', unitsRoute);
 
 	app.listen(PORT, '0.0.0.0', () => {
 		console.log(`[APP] Server is running on http://localhost:${PORT}`);

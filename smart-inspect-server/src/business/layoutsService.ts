@@ -17,7 +17,7 @@ interface DownloadParams {
 
 interface DeleteManyParams {
 	projectId: string;
-	ids: string[];
+	layoutIds: string[];
 }
 
 const layoutService = {
@@ -50,7 +50,7 @@ const layoutService = {
 				res.status(404).json({ error: 'Project not found' });
 				return false;
 			}
-			if (!(project.layouts as IImage[]).map(layout => layout._id).includes(layoutId)) {
+			if (!(project.layouts as IImage[]).map(layout => (layout._id as ObjectId).toString()).includes(layoutId)) {
 				res.status(404).json({ error: 'Layout not found' });
 				return false;
 			}
@@ -65,21 +65,21 @@ const layoutService = {
 			return false;
 		}
 	},
-	async deleteMany({ projectId, ids }: DeleteManyParams, res: Response): Promise<boolean> {
+	async deleteMany({ projectId, layoutIds }: DeleteManyParams, res: Response): Promise<boolean> {
 		try {
 			const project = await Project.findOne({ _id: projectId }).populate('layouts').exec();
 			if (!project) {
 				res.status(404).json({ error: 'Project not found' });
 				return false;
 			}
-			const wrongLayout = ids.filter(id => !(project.layouts as IImage[]).map(layout => layout._id).includes(id));
-			if (wrongLayout.length > 0) {
-				res.status(404).json({ error: `Layout(s) ${wrongLayout.join(', ')} not found` });
+			const wrongLayouts = layoutIds.filter(layoutId => !(project.layouts as IImage[]).map(layout => (layout._id as ObjectId).toString()).includes(layoutId));
+			if (wrongLayouts.length > 0) {
+				res.status(404).json({ error: `Layout(s) ${wrongLayouts.join(', ')} not found` });
 				return false;
 			}
-
-			const result = await imageService.deleteMany({ ids }, res);
+			const result = await imageService.deleteMany({ ids: layoutIds }, res);
 			if (!result) {
+				// Error message already sent
 				return false;
 			}
 			return true;

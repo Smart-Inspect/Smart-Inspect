@@ -19,9 +19,11 @@ function ProjectCreate() {
     const [isUploading, setIsUploading] = useState(false);
     const [duplicateUnitsFound, setDuplicateUnitsFound] = useState(false);
     const [duplicateEngineersFound, setDuplicateEngineersFound] = useState(false);
+    const [metrics, setMetrics] = useState<{ name: string, fieldType: string, values: (string | number)[], valueSchema: string }[]>([]);
+    const [duplicateMetricsFound, setDuplicateMetricsFound] = useState(false);
 
     type RangeCondition = 'odds' | 'evens' | `step=${number}`;
-    const parseUnitPattern = (input: string): number[] => {
+    const parseNumberPattern = (input: string): number[] => {
         const regex = /(\d+)(?:-(\d+)(?::(odds|evens|step=\d+))?)?/g;
         const results: number[] = [];
 
@@ -49,6 +51,10 @@ function ProjectCreate() {
         return results;
     }
 
+    const parseStringPattern = (input: string): string[] => {
+        return input.split(',').map(str => str.trim());
+    }
+
     const addEngineer = () => {
         setAssignedEngineers([...assignedEngineers, { engineerId: engineerList[0].id, unitNumbers: [], unitSchema: '' }]);
     }
@@ -69,6 +75,26 @@ function ProjectCreate() {
         });
     }
 
+    const addMetric = () => {
+        setMetrics([...(metrics), { name: "", fieldType: "text", values: [], valueSchema: "" }]);
+    }
+
+    const removeMetric = (index: number) => {
+        setMetrics(prev => {
+            const newMetrics = [...prev];
+            newMetrics.splice(index, 1);
+            return newMetrics;
+        });
+    }
+
+    const updateMetricData = (index: number, data: { name: string, fieldType: string, values: (string | number)[], valueSchema: string }) => {
+        setMetrics(prev => {
+            const newMetrics = [...prev];
+            newMetrics[index] = data;
+            return newMetrics;
+        })
+    }
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (duplicateUnitsFound) {
@@ -79,8 +105,12 @@ function ProjectCreate() {
             console.log('Duplicate engineers found');
             return;
         }
+        if (duplicateMetricsFound) {
+            console.log('Duplicate metrics found');
+            return;
+        }
 
-        const result = await projects.create(name, description, building, assignedEngineers.map(assignedEngineer => ({ engineerId: assignedEngineer.engineerId, unitNumbers: assignedEngineer.unitNumbers.map(String) })));
+        const result = await projects.create(name, description, building, assignedEngineers.map(assignedEngineer => ({ engineerId: assignedEngineer.engineerId, unitNumbers: assignedEngineer.unitNumbers.map(String) })), metrics.map(metric => ({ name: metric.name, fieldType: metric.fieldType, values: metric.values })));
         if (!result) {
             console.log('Failed to create project');
             return;
@@ -169,9 +199,23 @@ function ProjectCreate() {
             return duplicateEngineersFound;
         }
 
+        const checkForDuplicateMetrics = () => {
+            let duplicateMetricsFound = false;
+            let metricNames: string[] = [];
+            metrics.forEach(metric => {
+                if (metricNames.includes(metric.name)) {
+                    duplicateMetricsFound = true;
+                    return true;
+                }
+                metricNames.push(metric.name);
+            });
+            return duplicateMetricsFound;
+        }
+
         setDuplicateUnitsFound(checkForDuplicateUnits());
         setDuplicateEngineersFound(checkForDuplicateEngineers());
-    }, [assignedEngineers]);
+        setDuplicateMetricsFound(checkForDuplicateMetrics());
+    }, [assignedEngineers, metrics]);
 
     const goBack = () => {
         navigate(-1);
@@ -275,7 +319,7 @@ function ProjectCreate() {
                 <div className='M-section M-border-color' style={{ marginBottom: 50 }}>
                     <div className='M-section-entry'>
                         <span className='M-section-content'>
-                            <span className='M-section-text M-text-color'>Engineers</span>
+                            <span id='engineers' className='M-section-text M-text-color'>Engineers</span>
                             <label htmlFor="engineers" className='hidden-label'>Engineers</label>
                             <Button variant="secondary" type="button" onClick={() => addEngineer()}>Add Engineer</Button>
                         </span>
@@ -297,11 +341,61 @@ function ProjectCreate() {
                                         type="text"
                                         id="units"
                                         value={assignedEngineer.unitSchema}
-                                        onChange={(e) => { updateEngineerData(index, { engineerId: assignedEngineer.engineerId, unitNumbers: parseUnitPattern(e.target.value), unitSchema: e.target.value }) }}
+                                        onChange={(e) => { updateEngineerData(index, { engineerId: assignedEngineer.engineerId, unitNumbers: parseNumberPattern(e.target.value), unitSchema: e.target.value }) }}
                                         placeholder="Ex: 101, 107-155:odds, 200-300:step=10"
-                                        required
                                     />
                                     <Button variant="danger" type="button" onClick={() => removeEngineer(index)}>Remove</Button>
+                                </div>
+                            </span>
+                        </div>
+                    ))}
+                </div>
+                <h2 className='M-section-header' style={{ marginBottom: 30 }}>Inspection Metrics</h2>
+                <p className='M-section-description M-text-color'>Please input metrics you would like to measure for each inspection in this project.</p>
+                <div className='M-section M-border-color' style={{ marginBottom: 25 }}>
+                    <div className='M-section-entry' style={{ marginBottom: 15, marginTop: 25, paddingLeft: '3%', paddingRight: '3%' }}>
+                        <span className='M-section-text M-text-color' style={{ display: 'flex', flexDirection: 'column', marginBottom: 10 }}>Metrics that have been added:<br style={{ marginTop: 10 }} />{metrics.map((metric, _) => (
+                            <span className={duplicateMetricsFound ? 'M-text-warning' : 'M-text-color'}>{metric.name} ({metric.fieldType}): {metric.values.join(', ')}</span>
+                        ))}<br style={{ marginTop: 10 }} />Total Metrics: {metrics.length}</span>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                            {duplicateMetricsFound ? <span className='M-section-text M-text-danger'>WARNING: Duplicate metrics found</span> : <></>}
+                        </div>
+                    </div>
+                </div>
+                <div className='M-section M-border-color' style={{ marginBottom: 50 }}>
+                    <div className='M-section-entry'>
+                        <span className='M-section-content'>
+                            <span id='metrics' className='M-section-text M-text-color'>Metrics</span>
+                            <label htmlFor="metrics" className='hidden-label'>Metrics</label>
+                            <Button variant="secondary" type="button" onClick={() => addMetric()}>Add Metric</Button>
+                        </span>
+                    </div>
+                    {metrics.map((metric, index) => (
+                        <div className='M-section-entry' key={index}>
+                            <span className='M-section-content'>
+                                <label htmlFor={`metric-${index}`} className='hidden-label'>Metric</label>
+                                <Input
+                                    variant='secondary'
+                                    type="text"
+                                    id={`metric-${index}`}
+                                    value={metric.name}
+                                    onChange={(e) => { updateMetricData(index, { name: e.target.value, fieldType: metric.fieldType, values: metric.values, valueSchema: metric.valueSchema }) }}
+                                    placeholder="Add metric name here..."
+                                />
+                                <div style={{ display: 'flex', flexDirection: 'row', gap: 25 }}>
+                                    <select name={`metric-${index}`} id={`metric-${index}`} className="M-dropdown" onChange={(e) => { updateMetricData(index, { name: metric.name, fieldType: e.target.value, values: metric.values, valueSchema: metric.valueSchema }) }} required>
+                                        <option value='text' key={`metric-${index}`} className="M-section-text M-text-color" selected={metric.fieldType === 'text'}>Text</option>
+                                        <option value='number' key={`metric-${index}`} className="M-section-text M-text-color" selected={metric.fieldType === 'number'}>Number</option>
+                                    </select>
+                                    <Input
+                                        variant='secondary'
+                                        type="text"
+                                        id="units"
+                                        value={metric.valueSchema}
+                                        onChange={(e) => { updateMetricData(index, { name: metric.name, fieldType: metric.fieldType, values: metric.fieldType === 'text' ? parseStringPattern(e.target.value) : parseNumberPattern(e.target.value).map(String), valueSchema: e.target.value }) }}
+                                        placeholder={metric.fieldType === 'text' ? "Ex: moldy, clean, rough" : "Ex: 1-10"}
+                                    />
+                                    <Button variant="danger" type="button" onClick={() => removeMetric(index)}>Remove</Button>
                                 </div>
                             </span>
                         </div>

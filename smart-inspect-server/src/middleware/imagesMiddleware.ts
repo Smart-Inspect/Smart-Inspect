@@ -57,7 +57,6 @@ export function imageUpload({ allowedFileTypes }: ImageUploadOptions) {
 					return;
 				}
 				const timestampArray = JSON.parse(timestamps);
-				console.log('Timestamps:', timestampArray, 'Timestamps type:', typeof timestampArray, 'Timestamps length:', timestampArray.length);
 				const uploadedImages = req.files as Express.Multer.File[];
 				if (uploadedImages.length !== timestampArray.length) {
 					res.status(400).json({ error: 'Number of timestamps does not match number of uploaded images' });

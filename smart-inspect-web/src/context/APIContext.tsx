@@ -56,7 +56,7 @@ export const APIProvider = ({ children }: { children: ReactNode }) => {
                 signal
             });
 
-            const data = response.status !== 204 ? await response.json() : null;
+            const data = response.status !== 204 ? dynamicData ? await response.blob() : await response.json() : null;
             const returnVal = new Response(response.status, data);
 
             // Handle unauthorized by getting new access token

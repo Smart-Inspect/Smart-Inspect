@@ -16,7 +16,8 @@ export interface IInspection {
   inspectionDate: Date;
   layout: string;
   notes: string;
-  images: string[];
+  photos: IImage[];
+  metrics: IMetric[];
   status: "completed" | "not-started";
 }
 
@@ -34,9 +35,11 @@ export interface IProject {
   name: string;
   description: string;
   building: IBuilding;
+  layouts: IImage[];
   units: IUnit[];
   engineers: IUser[];
   inspections: IInspection[];
+  metricsSchema: IMetricsSchema[];
   status: "started" | "completed" | "not-started";
   createdAt: Date;
   updatedAt: Date;
@@ -60,9 +63,20 @@ export interface IBuilding {
 export interface IImage {
   id: string;
   name: string;
-  url: string; // The URL of the uploaded image in the cloud storage
+  url: string; // The URL of the uploaded image in the cloud storage (should get swapped with the actual image url AKA the one to use in the <img> tag)
   type: string;
   uploader: IUser;
   timestamp: Date;
   uploadedAt: Date;
+}
+
+export interface IMetricsSchema {
+  name: string;
+  fieldType: "text" | "number";
+  values: (string | number)[] | null;
+}
+
+export interface IMetric {
+  name: string;
+  value: string | number | null;
 }

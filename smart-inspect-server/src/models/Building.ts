@@ -2,7 +2,7 @@ import mongoose, { CallbackError, Document, Schema } from 'mongoose';
 import Project from './Project';
 import Unit, { IUnit } from './Unit';
 
-interface IAddress {
+export interface IAddress {
 	address: string;
 	changedAt: Date;
 }
@@ -52,9 +52,13 @@ buildingSchema.pre<IBuilding>('save', function (next) {
 buildingSchema.pre('deleteOne', { document: true, query: false }, async function (next) {
 	try {
 		const projects = await Project.find({ building: this._id });
+		console.log('Projects:', projects);
 		await Project.deleteMany({ _id: { $in: projects } });
+		console.log('Projects deleted');
 		const units = await Unit.find({ building: this._id });
+		console.log('Units:', units);
 		await Unit.deleteMany({ _id: { $in: units } });
+		console.log('Units deleted');
 		next();
 	} catch (error) {
 		next(error as CallbackError);

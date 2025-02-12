@@ -1,6 +1,6 @@
 import mongoose, { Document, Schema } from 'mongoose';
 import permissions from '../config/permissions';
-import { IInspection } from './Inspection';
+//import { IInspection } from './Inspection';
 
 export interface IUser extends Document {
 	email: string;
@@ -8,7 +8,7 @@ export interface IUser extends Document {
 	firstName: string;
 	lastName: string;
 	permissions: number[];
-	assignedInspections: IInspection['_id'][];
+	//assignedInspections: IInspection['_id'][];
 	refreshTokens: string[];
 	resetToken: string;
 	verifyToken: string;
@@ -24,7 +24,7 @@ const userSchema: Schema = new Schema(
 		firstName: { type: String, required: true },
 		lastName: { type: String, required: true },
 		permissions: { type: [Number], default: [permissions.ENGINEER] },
-		assignedInspections: { type: [Schema.Types.ObjectId], ref: 'Inspection', default: [] },
+		//assignedInspections: { type: [Schema.Types.ObjectId], ref: 'Inspection', default: [] },
 		refreshTokens: { type: [String], required: false },
 		resetToken: { type: String, required: false },
 		verifyToken: { type: String, required: false },
@@ -42,10 +42,10 @@ userSchema.pre<IUser>('save', function (next) {
 			this.refreshTokens.shift();
 		}
 	}
-	if (this.isModified('assignedInspections') && !this.permissions.includes(permissions.ENGINEER)) {
+	/*if (this.isModified('assignedInspections') && !this.permissions.includes(permissions.ENGINEER)) {
 		this.assignedInspections = [];
 		return next(new Error('User is not an engineer, cannot have assigned inspections'));
-	}
+	}*/
 	next();
 });
 

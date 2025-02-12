@@ -21,14 +21,15 @@ const imageSchema: Schema = new Schema({
 	uploadedAt: { type: Date, default: Date.now }
 });
 
-// Pre-delete hook to delete all inspections associated with the project
+// Pre-delete hook to delete all inspections associated with the layout OR remove references to this image from any inspections AND remove references to this image from any projects
 imageSchema.pre('deleteOne', { document: true, query: false }, async function (next) {
 	try {
 		// If this image is associated with a project (AKA its a layout), remove it from the project
 		// Also, there should only be one project associated with this image, so I call updateOne (versus updateMany)
-		await Project.updateOne({ units: this._id }, { $pull: { units: this._id } }).exec();
+		await Project.updateOne({ layouts: this._id }, { $pull: { layouts: this._id } }).exec();
 		// If this image is a layout for an inspection, remove that inspection (since its layout is being deleted)
-		await Inspection.deleteMany({ layout: this._id }).exec();
+		const inspections = await Inspection.find({ layout: this._id });
+		await Inspection.deleteMany({ _id: { $in: inspections } }).exec();
 		// Else if this image is just a picture from that inspection, simply remove it from the inspection
 		// Also, once again there should only be one inspection associated with this image, so I call updateOne (versus updateMany)
 		await Inspection.updateOne({ images: this._id }, { $pull: { images: this._id } }).exec();

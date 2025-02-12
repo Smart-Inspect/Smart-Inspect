@@ -10,7 +10,7 @@ import Popup from '../../components/Popup/Popup';
 function Building() {
     const navigate = useNavigate();
     const { id } = useParams();
-    const { buildings } = useRequests();
+    const { buildings, units } = useRequests();
     const [inEditMode, setInEditMode] = useState(false);
     const [name, setName] = useState('');
     const [address, setAddress] = useState('');
@@ -23,6 +23,8 @@ function Building() {
     const [numberSearchQuery, setNumberSearchQuery] = useState('');
     const [inspectionsSearchQuery, setInspectionsSearchQuery] = useState('');
     const [deleteBuildingPopupVisible, setDeleteBuildingPopupVisible] = useState(false);
+    const [deleteUnitPopupVisible, setDeleteUnitPopupVisible] = useState(false);
+    const [unitToDelete, setUnitToDelete] = useState<IUnit>();
 
     const handleSearch = (catagory: 'number' | 'inspections', query: string) => {
         switch (catagory) {
@@ -61,6 +63,21 @@ function Building() {
         goBack();
     }
 
+    const deleteUnit = async () => {
+        if (!id) {
+            return;
+        }
+        if (!unitToDelete) {
+            return;
+        }
+        setDeleteUnitPopupVisible(false);
+        if (!await units.delete(unitToDelete.id)) {
+            console.log('Failed to delete unit');
+            return;
+        }
+        console.log('Unit deleted successfully');
+    }
+
     const openEditMode = () => {
         setEditAddresses(addresses);
         setInEditMode(true);
@@ -91,26 +108,12 @@ function Building() {
         setName(result.name);
         setAddress(result.address);
         setAddresses(result.addresses);
+        setUnitsList(result.units);
+        setFilteredUnits(result.units);
+        console.log(result);
         setBuildingCreated(new Date(parseInt(result.createdAt)).toLocaleString());
         setBuildingModified(new Date(parseInt(result.updatedAt)).toLocaleString());
         console.log('Building info fetched successfully');
-    }, [buildings, id]);
-
-    const fetchBuildingUnits = useCallback(async (abort?: AbortController) => {
-        if (!id) {
-            return;
-        }
-        const result = await buildings.viewUnits(id, abort);
-        if (result === 'abort') {
-            return;
-        }
-        if (result === 'fail') {
-            console.log('Failed to fetch building units');
-            return;
-        }
-        setUnitsList(result);
-        setFilteredUnits(result);
-        console.log('Building units fetched successfully');
     }, [buildings, id]);
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -140,11 +143,10 @@ function Building() {
     useEffect(() => {
         const controller = new AbortController();
         fetchBuildingInfo(controller);
-        fetchBuildingUnits(controller);
         return () => {
             controller.abort();
         }
-    }, [fetchBuildingInfo, fetchBuildingUnits]);
+    }, [fetchBuildingInfo]);
 
     const goBack = () => {
         navigate(-1);
@@ -165,6 +167,19 @@ function Building() {
                     </div>
                 </div>
             </Popup>
+            {/* Delete Unit Popup */}
+            <Popup
+                visible={deleteUnitPopupVisible}
+                onRequestClose={() => { setDeleteUnitPopupVisible(false) }}
+            >
+                <div style={{ width: 450 }}>
+                    <span className="M-popup-text M-text-color">{`Are you sure you want to delete Unit ${unitToDelete?.number}?`}</span>
+                    <div style={{ display: 'flex', justifyContent: 'center', flexDirection: 'row', gap: 75, marginTop: 35 }}>
+                        <Button variant="secondary" type="button" onClick={() => { deleteUnit() }} style={{ width: 100 }}>Yes</Button>
+                        <Button variant="secondary" type="button" onClick={() => { setDeleteUnitPopupVisible(false) }} style={{ width: 100 }}>No</Button>
+                    </div>
+                </div>
+            </Popup>
             {/* Title */}
             <h1 className='M-title'>{`Building: ${name}`}</h1>
             {/* Building Info */}
@@ -177,6 +192,7 @@ function Building() {
             {
                 inEditMode ?
                     <form onSubmit={handleSubmit}>
+                        <h2 className='M-section-header' style={{ marginBottom: 30 }}>General Information</h2>
                         <div className='M-section M-border-color'>
                             <div className='M-section-entry'>
                                 <span className='M-section-content'>
@@ -251,6 +267,7 @@ function Building() {
                     </form>
                     :
                     <>
+                        <h2 className='M-section-header' style={{ marginBottom: 30 }}>General Information</h2>
                         <div className='M-section M-border-color'>
                             <div className='M-section-entry'>
                                 <span className='M-section-content'>
@@ -304,47 +321,54 @@ function Building() {
                 <thead>
                     <tr className='M-table-tr'>
                         <th className='M-table-th M-section-header M-text-color'>Number</th>
-                        <th className='M-table-th M-section-header M-text-color'>Inspection History</th>
+                        <th className='M-table-th M-section-header M-text-color'>Completed Inspections</th>
+                        <th className='M-table-th M-section-header M-text-color'>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr className='M-table-tr'>
-                        <td className='M-table-td M-section-header M-text-color'>
-                            <label htmlFor="name" className='hidden-label'>Number</label>
+                        <td className='M-table-td M-section-header M-text-color' style={{ maxWidth: 300 }}>
+                            <label htmlFor="number" className='hidden-label'>Unit Number</label>
                             <Input
                                 variant='secondary'
                                 type="text"
-                                id="name"
+                                id="number"
                                 value={numberSearchQuery}
                                 onChange={(e) => { handleSearch('number', e.target.value) }}
-                                placeholder="Sort by name..."
+                                placeholder="Sort by number..."
                                 required
                                 className='M-table-input'
                             />
                         </td>
-                        <td className='M-table-td M-section-header M-text-color'>
-                            <label htmlFor="address" className='hidden-label'>Building Address</label>
+                        <td className='M-table-td M-section-header M-text-color' style={{ maxWidth: 300 }}>
+                            <label htmlFor="inspections" className='hidden-label'>Completed Inspections</label>
                             <Input
                                 variant='secondary'
                                 type="text"
-                                id="address"
+                                id="inspections"
                                 value={inspectionsSearchQuery}
                                 onChange={(e) => { handleSearch('inspections', e.target.value) }}
-                                placeholder="Sort by address..."
+                                placeholder="Sort by inpection..."
                                 required
                                 className='M-table-input'
                             />
+                        </td>
+                        <td className='M-table-td' style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
                         </td>
                     </tr>
                     {filteredUnits.map((unit, _) => (
                         <tr className='M-table-tr'>
                             <td className='M-table-td M-section-text M-text-color'>{unit.number}</td>
-                            <td className='M-table-td M-section-text M-text-color' style={{ display: 'flex', flexDirection: 'column', gap: 30 }}>{unit.inspections.length > 0 ? unit.inspections.map(inspection => (
-                                <div style={{ display: 'flex', flexDirection: 'row', gap: 20 }}>
-                                    <span key={inspection.inspectionDate.toString()} style={{ alignSelf: 'center' }}>{inspection.inspectionDate.toDateString()}</span>
+                            <td className='M-table-td M-section-text M-text-color' style={{ display: 'flex', flexDirection: 'column', gap: 30 }}>{unit.inspections.filter(inspection => inspection.status === 'completed').length > 0 ? unit.inspections.map(inspection => (
+                                <div key={inspection.inspectionDate.toString()} style={{ display: 'flex', flexDirection: 'row', gap: 20 }}>
+                                    <span style={{ alignSelf: 'center' }}>{inspection.inspectionDate.toDateString()}</span>
                                     <Button variant="secondary" type="button" onClick={() => { navigate(`/auth/inspections/${inspection.id}`) }} style={{ width: 80 }}>View</Button>
                                 </div>
-                            )) : <span>No inspections</span>}</td>
+                            )) : <div style={{ marginTop: 15 }}>No completed inspections</div>}</td>
+                            <td className='M-table-td'>
+                                <Button variant="secondary" type="button" onClick={() => { navigate(`/auth/units/${unit.id}`) }} style={{ width: 80, marginRight: 10, marginTop: 5, marginBottom: 5 }}>View</Button>
+                                <Button variant="danger" type="button" onClick={() => { setUnitToDelete(unit); setDeleteUnitPopupVisible(true); }} style={{ width: 100 }}>Delete</Button>
+                            </td>
                         </tr>
                     ))}
                 </tbody>

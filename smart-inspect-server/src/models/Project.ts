@@ -4,6 +4,13 @@ import { IUnit } from './Unit';
 import { IUser } from './User';
 import { IImage } from './Image';
 import Inspection, { IInspection } from './Inspection';
+import imageService from '../business/imagesService';
+
+export interface IMetricsSchema {
+	name: string;
+	fieldType: 'text' | 'number';
+	values: (string | number)[] | null;
+}
 
 export interface IProject extends Document {
 	name: string;
@@ -13,6 +20,7 @@ export interface IProject extends Document {
 	units: IUnit['_id'][];
 	engineers: IUser['_id'][];
 	inspections: IInspection['_id'][];
+	metricsSchema: IMetricsSchema[];
 	status: 'started' | 'completed' | 'not-started';
 	createdAt: Date;
 	updatedAt: Date;
@@ -27,6 +35,16 @@ const projectSchema: Schema<IProject> = new Schema(
 		units: [{ type: Schema.Types.ObjectId, ref: 'Unit', default: [] }],
 		engineers: [{ type: Schema.Types.ObjectId, ref: 'User', default: [] }],
 		inspections: [{ type: Schema.Types.ObjectId, ref: 'Inspection', default: [] }],
+		metricsSchema: {
+			type: [
+				{
+					name: { type: String, required: true },
+					fieldType: { type: String, enum: ['text', 'number'], required: true },
+					values: { type: Schema.Types.Mixed, required: false }
+				}
+			],
+			default: []
+		},
 		status: { type: String, enum: ['started', 'completed', 'not-started'], default: 'not-started' }
 	},
 	{ timestamps: true }
@@ -37,6 +55,11 @@ projectSchema.pre('deleteOne', { document: true, query: false }, async function 
 	try {
 		const inspections = await Inspection.find({ project: this._id });
 		await Inspection.deleteMany({ _id: { $in: inspections } }).exec();
+		const layouts = this.layouts as string[];
+		const success = await imageService.deleteMany({ ids: layouts }, undefined);
+		if (!success) {
+			throw new Error('Failed to delete project layouts');
+		}
 		next();
 	} catch (error) {
 		next(error as CallbackError);
@@ -46,12 +69,14 @@ projectSchema.pre('deleteOne', { document: true, query: false }, async function 
 projectSchema.pre('deleteMany', { document: false, query: true }, async function (next) {
 	try {
 		const filter = this.getFilter();
-		const projectIds = filter._id ? filter._id.$in : []; // Extract the list of project IDs
-		if (projectIds.length === 0) {
-			return next();
+		const projects = filter._id.$in; // Extract the list of projects
+		const inspectionIds = (await Inspection.find({ project: { $in: projects } })).map(inspection => inspection._id);
+		await Inspection.deleteMany({ _id: { $in: inspectionIds } }).exec();
+		const layouts = (await Project.find({ _id: { $in: projects } })).map(project => project.layouts).flat() as string[];
+		const success = await imageService.deleteMany({ ids: layouts }, undefined);
+		if (!success) {
+			throw new Error('Failed to delete project layouts');
 		}
-		const inspectionIds = (await Inspection.find({ project: { $in: projectIds } })).map(inspection => inspection._id);
-		await Inspection.deleteMany({ project: { $in: inspectionIds } });
 		next();
 	} catch (error) {
 		next(error as CallbackError);

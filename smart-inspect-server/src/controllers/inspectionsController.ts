@@ -2,6 +2,7 @@ import type { Request, Response } from 'express';
 import Inspection from '../models/Inspection';
 import inspectionService from '../business/inspectionsService';
 import photoService from '../business/photosService';
+import layoutService from '../business/layoutsService';
 
 export async function viewInspection(req: Request, res: Response) {
 	const { id } = req.params;
@@ -17,14 +18,24 @@ export async function viewInspection(req: Request, res: Response) {
 		inspectionDate: inspection.inspectionDate,
 		layout: inspection.layout,
 		notes: inspection.notes,
-		images: inspection.images
+		photos: inspection.photos,
+		metrics: inspection.metrics,
+		status: inspection.status
 	});
+}
+
+export async function downloadLayout(req: Request, res: Response) {
+	const { id, layoutId } = req.params;
+	const layout = await layoutService.download({ projectId: id, layoutId }, req, res);
+	if (!layout) {
+		return;
+	}
 }
 
 export async function editInspection(req: Request, res: Response) {
 	const { id } = req.params;
-	const { inspectionDate, layoutId, notes } = req.body;
-	const inspection = await inspectionService.edit({ id, inspectionDate, layoutId, notes }, req, res);
+	const { inspectionDate, layoutId, notes, metrics, status } = req.body;
+	const inspection = await inspectionService.edit({ id, inspectionDate, layoutId, notes, metrics, status }, req, res);
 	if (!inspection) {
 		return;
 	}
@@ -51,19 +62,20 @@ export async function uploadPhoto(req: Request, res: Response) {
 
 export async function downloadPhoto(req: Request, res: Response) {
 	const { id, photoId } = req.params;
-	const result = await photoService.download({ inspectionId: id, imageId: photoId }, req, res);
+	const result = await photoService.download({ inspectionId: id, photoId }, req, res);
 	if (!result) {
 		return;
 	}
 }
 
-export async function viewPhotos(req: Request, res: Response) {
+export async function deletePhotos(req: Request, res: Response) {
 	const { id } = req.params;
-	const images = await photoService.viewMany({ inspectionId: id }, req, res);
-	if (!images) {
+	const { photoIds } = req.body;
+	const result = await photoService.deleteMany({ inspectionId: id, photoIds }, res);
+	if (!result) {
 		return;
 	}
-	res.status(200).json(images);
+	res.status(200).json({ message: 'Layout(s) deleted' });
 }
 
 export async function viewAssignedInspections(req: Request, res: Response) {

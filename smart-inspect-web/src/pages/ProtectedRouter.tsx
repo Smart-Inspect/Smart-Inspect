@@ -1,11 +1,10 @@
 import './Protected/MainStyles.css';
 import { useEffect } from 'react';
-import { Route } from 'react-router-dom';
+import { Route, Navigate } from 'react-router-dom';
 import { Routes } from 'react-router';
 import { ColorProvider } from '../context/ColorContext';
 import { useAPI } from '../context/APIContext';
 import { useRequests } from '../context/RequestsContext';
-import { Navigate } from 'react-router-dom';
 import Sidebar from '../components/Sidebar/Sidebar';
 import Spinner from '../components/Spinner/Spinner';
 import Projects from './Protected/Projects';
@@ -19,8 +18,9 @@ import User from './Protected/User';
 import UserCreate from './Protected/UserCreate';
 import Profile from './Protected/Profile';
 import Settings from './Protected/Settings';
-import NotFound from './NotFound';
 import NotificationBar from '../components/NotificationBar/NotificationBar';
+import Inspection from './Protected/Inspection';
+import Unit from './Protected/Unit';
 
 function ProtectedRouter() {
     const api = useAPI();
@@ -80,6 +80,7 @@ function ProtectedRouter() {
                         : null
                     }
                     {
+                        // TODO: Come back and fix the loading spinner
                         api.loading ?
                             <div className='M-container'>
                                 <Spinner />
@@ -93,12 +94,14 @@ function ProtectedRouter() {
                                 <Route path="/buildings" element={<Buildings />} />
                                 <Route path="/buildings/:id" element={<Building />} />
                                 <Route path="/buildings/create" element={<BuildingCreate />} />
+                                <Route path="/inspections/:id" element={<Inspection />} />
+                                <Route path="/units/:id" element={<Unit />} />
                                 <Route path="/users" element={<Users />} />
                                 <Route path="/users/:id" element={<User />} />
                                 <Route path="/users/create" element={<UserCreate />} />
                                 <Route path="/profile" element={<Profile />} />
                                 <Route path="/settings" element={<Settings />} />
-                                <Route path="*" element={<NotFound displayLogo={true} />} />
+                                <Route path="*" element={<Navigate to='/not-found' />} />
                             </Routes>
                     }
                 </div>

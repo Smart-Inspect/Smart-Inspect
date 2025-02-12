@@ -28,20 +28,31 @@ interface RequestsContextType {
         create: (name: string, address: string) => Promise<any | null>,
         view: (id: string, abort?: AbortController) => Promise<any | 'fail' | 'abort'>,
         viewAll: (abort?: AbortController) => Promise<any | 'fail' | 'abort'>,
-        viewUnits: (id: string, abort?: AbortController) => Promise<any | 'fail' | 'abort'>,
         edit: (id: string, name: string, address: string, addressHistory: string[] | undefined) => Promise<boolean>,
         delete: (id: string) => Promise<boolean>,
     }
     projects: {
-        create: (name: string, description: string, buildingId: string, engineerToUnits: { engineerId: string; unitNumbers: string[] }[]) => Promise<any | null>,
+        create: (name: string, description: string, buildingId: string, engineerToUnits: { engineerId: string; unitNumbers: string[] }[], metricsSchema: { name: string, fieldType: string, values: (string | number)[] }[]) => Promise<any | null>,
         view: (id: string, abort?: AbortController) => Promise<any | 'fail' | 'abort'>,
-        edit: (id: string, name: string, description: string, unitNumbers: string[], engineerIds: string[], status: 'started' | 'completed' | 'not-started', engineerToUnits: { engineerId: string; unitNumbers: string[] }[]) => Promise<boolean>,
+        edit: (id: string, name: string, description: string, status: 'started' | 'completed' | 'not-started', engineerToUnits: { engineerId: string; unitNumbers: string[] }[], metricsSchema: { name: string, fieldType: string, values: (string | number)[] }[]) => Promise<boolean>,
         viewAll: (abort?: AbortController) => Promise<any | 'fail' | 'abort'>,
         uploadLayouts: (id: string, data: FormData) => Promise<boolean>,
-        viewLayouts: (id: string, abort?: AbortController) => Promise<any | 'fail' | 'abort'>,
-        downloadLayout: (id: string, layoutId: string) => Promise<any | 'fail' | 'abort'>,
+        downloadLayout: (id: string, layoutId: string, abort?: AbortController) => Promise<any | 'fail' | 'abort'>,
         delete: (id: string) => Promise<boolean>,
         deleteLayouts: (id: string, layoutIds: string[]) => Promise<boolean>,
+    }
+    inspections: {
+        view: (id: string, abort?: AbortController) => Promise<any | 'fail' | 'abort'>,
+        downloadLayout: (id: string, layoutId: string, abort?: AbortController) => Promise<any | 'fail' | 'abort'>,
+        downloadPhoto: (id: string, photoId: string, abort?: AbortController) => Promise<any | 'fail' | 'abort'>,
+        edit: (id: string, notes: string, status: 'completed' | 'not-started') => Promise<boolean>,
+        delete: (id: string) => Promise<boolean>,
+        deletePhotos: (id: string, photoIds: string[]) => Promise<boolean>,
+    }
+    units: {
+        view: (id: string, abort?: AbortController) => Promise<any | 'fail' | 'abort'>,
+        edit: (id: string, number: string) => Promise<boolean>,
+        delete: (id: string) => Promise<boolean>,
     }
 }
 
@@ -105,7 +116,7 @@ export const RequestsProvider = ({ children }: { children: ReactNode }) => {
                 auth.logout();
                 return true;
             } else {
-                console.log('Logout failed: ' + response.data.error);
+                displayNotification('error', response.data.error);
                 return false;
             }
         },
@@ -238,16 +249,6 @@ export const RequestsProvider = ({ children }: { children: ReactNode }) => {
                 return 'abort';
             }
         },
-        viewUnits: async (id: string, abort?: AbortController) => {
-            const response = await api.request(`buildings/view/${id}/units`, 'GET', null, true, abort);
-            if (response.status === 200) {
-                return response.data;
-            } else if (response.status > 0) {
-                return 'fail';
-            } else {
-                return 'abort';
-            }
-        },
         viewAll: async (abort?: AbortController) => {
             const response = await api.request('buildings/view', 'GET', null, true, abort);
             if (response.status === 200) {
@@ -264,7 +265,6 @@ export const RequestsProvider = ({ children }: { children: ReactNode }) => {
                 address,
                 addresses
             }
-            console.log(body);
             const response = await api.request(`buildings/edit/${id}`, 'PUT', body, true);
             if (response.status === 200) {
                 displayNotification('success', response.data.message);
@@ -275,7 +275,7 @@ export const RequestsProvider = ({ children }: { children: ReactNode }) => {
             }
         },
         delete: async (id: string) => {
-            const response = await api.request(`users/delete/${id}`, 'DELETE', null, true);
+            const response = await api.request(`buildings/delete/${id}`, 'DELETE', null, true);
             if (response.status === 200) {
                 displayNotification('success', response.data.message);
                 return true;
@@ -287,7 +287,7 @@ export const RequestsProvider = ({ children }: { children: ReactNode }) => {
     }
 
     const projects = {
-        create: async (name: string, description: string, buildingId: string, engineerToUnits: { engineerId: string; unitNumbers: string[] }[]) => {
+        create: async (name: string, description: string, buildingId: string, engineerToUnits: { engineerId: string; unitNumbers: string[] }[], metricsSchema: { name: string, fieldType: string, values: (string | number)[] }[]) => {
             const engineerIds = engineerToUnits.map(e => e.engineerId);
             const unitNumbers = engineerToUnits.reduce((acc, curr) => acc.concat(curr.unitNumbers), [] as string[]);
             const body = {
@@ -296,7 +296,8 @@ export const RequestsProvider = ({ children }: { children: ReactNode }) => {
                 buildingId,
                 unitNumbers,
                 engineerIds,
-                engineerToUnits
+                engineerToUnits,
+                metricsSchema
             }
             const response = await api.request('projects/create', 'POST', body, true);
             if (response.status === 201) {
@@ -317,14 +318,17 @@ export const RequestsProvider = ({ children }: { children: ReactNode }) => {
                 return 'abort';
             }
         },
-        edit: async (id: string, name: string, description: string, unitNumbers: string[], engineerIds: string[], status: 'started' | 'completed' | 'not-started', engineerToUnits: { engineerId: string; unitNumbers: string[] }[]) => {
+        edit: async (id: string, name: string, description: string, status: 'started' | 'completed' | 'not-started', engineerToUnits: { engineerId: string; unitNumbers: string[] }[], metricsSchema: { name: string, fieldType: string, values: (string | number)[] }[]) => {
+            const engineerIds = engineerToUnits.map(e => e.engineerId);
+            const unitNumbers = engineerToUnits.reduce((acc, curr) => acc.concat(curr.unitNumbers), [] as string[]);
             const body = {
                 name,
                 description,
                 unitNumbers,
                 engineerIds,
                 status,
-                engineerToUnits
+                engineerToUnits,
+                metricsSchema
             }
             const response = await api.request(`projects/edit/${id}`, 'PUT', body, true);
             if (response.status === 200) {
@@ -338,7 +342,8 @@ export const RequestsProvider = ({ children }: { children: ReactNode }) => {
         uploadLayouts: async (id: string, data: FormData) => {
             const response = await api.request(`projects/create/${id}/upload-layouts`, 'POST', data, true, undefined, true);
             if (response.status === 201) {
-                displayNotification('success', response.data.message);
+                // Displaying a notification here will cause the previous notification to stack weirdly, unnecessary
+                //displayNotification('success', response.data.message);
                 return true;
             } else {
                 displayNotification('error', response.data.error);
@@ -355,21 +360,12 @@ export const RequestsProvider = ({ children }: { children: ReactNode }) => {
                 return 'abort';
             }
         },
-        viewLayouts: async (id: string, abort?: AbortController) => {
-            const response = await api.request(`projects/view/${id}/layouts`, 'GET', null, true, abort);
+        downloadLayout: async (id: string, layoutId: string, abort?: AbortController) => {
+            const response = await api.request(`projects/view/${id}/download-layout/${layoutId}`, 'GET', null, true, abort, true);
             if (response.status === 200) {
                 return response.data;
             } else if (response.status > 0) {
-                return 'fail';
-            } else {
-                return 'abort';
-            }
-        },
-        downloadLayout: async (id: string, layoutId: string) => {
-            const response = await api.request(`projects/view/${id}/download-layout/${layoutId}`, 'GET', null, true);
-            if (response.status === 200) {
-                return response.data;
-            } else if (response.status > 0) {
+                console.log('Failed to fetch layout: ' + response.data.error);
                 return 'fail';
             } else {
                 return 'abort';
@@ -389,7 +385,115 @@ export const RequestsProvider = ({ children }: { children: ReactNode }) => {
             const body = {
                 layoutIds
             }
-            const response = await api.request(`projects/delete/${id}/layouts`, 'DELETE', body, true);
+            const response = await api.request(`projects/delete/${id}/delete-layouts`, 'DELETE', body, true);
+            if (response.status === 200) {
+                displayNotification('success', response.data.message);
+                return true;
+            } else {
+                displayNotification('error', response.data.error);
+                return false;
+            }
+        }
+    }
+
+    const inspections = {
+        view: async (id: string, abort?: AbortController) => {
+            const response = await api.request(`inspections/view/${id}`, 'GET', null, true, abort);
+            if (response.status === 200) {
+                return response.data;
+            } else if (response.status > 0) {
+                return 'fail';
+            } else {
+                return 'abort';
+            }
+        },
+        downloadLayout: async (id: string, layoutId: string, abort?: AbortController) => {
+            const response = await api.request(`inspections/view/${id}/download-layout/${layoutId}`, 'GET', null, true, abort, true);
+            if (response.status === 200) {
+                return response.data;
+            } else if (response.status > 0) {
+                console.log('Failed to fetch layout: ' + response.data.error);
+                return 'fail';
+            } else {
+                return 'abort';
+            }
+        },
+        downloadPhoto: async (id: string, photoId: string, abort?: AbortController) => {
+            const response = await api.request(`inspections/view/${id}/download-photo/${photoId}`, 'GET', null, true, abort, true);
+            if (response.status === 200) {
+                return response.data;
+            } else if (response.status > 0) {
+                console.log('Failed to fetch photo: ' + response.data.error);
+                return 'fail';
+            } else {
+                return 'abort';
+            }
+        },
+        edit: async (id: string, notes: string, status: 'completed' | 'not-started') => {
+            const body = {
+                notes,
+                status
+            }
+            const response = await api.request(`inspections/edit/${id}`, 'PUT', body, true);
+            if (response.status === 200) {
+                displayNotification('success', response.data.message);
+                return true;
+            } else {
+                displayNotification('error', response.data.error);
+                return false;
+            }
+        },
+        delete: async (id: string) => {
+            const response = await api.request(`inspections/delete/${id}`, 'DELETE', null, true);
+            if (response.status === 200) {
+                displayNotification('success', response.data.message);
+                return true;
+            } else {
+                displayNotification('error', response.data.error);
+                return false;
+            }
+        },
+        deletePhotos: async (id: string, photoIds: string[]) => {
+            const body = {
+                photoIds
+            }
+            const response = await api.request(`inspections/delete/${id}/delete-layouts`, 'DELETE', body, true);
+            if (response.status === 200) {
+                displayNotification('success', response.data.message);
+                return true;
+            } else {
+                displayNotification('error', response.data.error);
+                return false;
+            }
+        }
+    }
+
+    const units = {
+        view: async (id: string, abort?: AbortController) => {
+            const response = await api.request(`units/view/${id}`, 'GET', null, true, abort);
+            if (response.status === 200) {
+                return response.data;
+            } else if (response.status > 0) {
+                return 'fail';
+            } else {
+                return 'abort';
+            }
+        },
+        edit: async (id: string, number: string) => {
+            const body = {
+                number
+            }
+            const response = await api.request(`units/edit/${id}`, 'PUT', body, true);
+            if (response.status === 200) {
+                displayNotification('success', response.data.message);
+                return true;
+            } else {
+                displayNotification('error', response.data.error);
+                return false;
+            }
+        },
+        delete: async (id: string) => {
+            const response = await api.request(`units/delete/${id}`, 'DELETE', null, true);
             if (response.status === 200) {
                 displayNotification('success', response.data.message);
                 return true;
@@ -401,7 +505,7 @@ export const RequestsProvider = ({ children }: { children: ReactNode }) => {
     }
 
     return (
-        <RequestsContext.Provider value={{ notification, users, buildings, projects }}>
+        <RequestsContext.Provider value={{ notification, users, buildings, projects, inspections, units }}>
             {children}
         </RequestsContext.Provider>
     );

@@ -1,5 +1,5 @@
 import mongoose, { CallbackError, Document, Schema } from 'mongoose';
-import { IBuilding } from './Building';
+import Building, { IBuilding } from './Building';
 import Inspection, { IInspection } from './Inspection';
 import Project from './Project';
 
@@ -29,12 +29,13 @@ unitSchema.pre('deleteOne', { document: true, query: false }, async function (ne
 		const inspections = await Inspection.find({ unit: this._id });
 		await Inspection.deleteMany({ _id: { $in: inspections } }).exec();
 		await Project.updateMany({ units: this._id }, { $pull: { units: this._id } }).exec();
+		await Building.updateMany({ units: this._id }, { $pull: { units: this._id } }).exec();
 		next();
 	} catch (error) {
 		next(error as CallbackError);
 	}
 });
-// Pre-delete hook to delete all inspections associated with the unity AND remove references to this unit from any projects
+// Pre-delete hook to delete all inspections associated with the unit AND remove references to this unit from any projects
 unitSchema.pre('deleteMany', { document: false, query: true }, async function (next) {
 	try {
 		const filter = this.getFilter();
@@ -42,6 +43,7 @@ unitSchema.pre('deleteMany', { document: false, query: true }, async function (n
 		const inspectionIds = (await Inspection.find({ unit: { $in: units } })).map(inspection => inspection._id);
 		await Inspection.deleteMany({ _id: { $in: inspectionIds } }).exec();
 		await Project.updateMany({ units: { $in: units } }, { $pull: { units: { $in: units } } });
+		await Building.updateMany({ units: { $in: units } }, { $pull: { units: { $in: units } } });
 		next();
 	} catch (error) {
 		next(error as CallbackError);
