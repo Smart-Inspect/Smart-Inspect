@@ -78,7 +78,7 @@ function Project() {
             const engineer = aEs[i];
             const inspections = result.inspections.filter((inspection: IInspection) => inspection.engineer === engineer.engineerId);
             const units = result.units.filter((unit: IUnit) => inspections.map((inspection: IInspection) => inspection.unit).includes(unit.id));
-            engineer.unitNumbers = units.map((unit: IUnit) => unit.number);
+            engineer.unitNumbers = units.map((unit: IUnit) => parseInt(unit.number));
             engineer.unitSchema = engineer.unitNumbers.join(', ');
         }
         setAssignedEngineers(aEs);
@@ -318,7 +318,7 @@ function Project() {
                     if (query === '') {
                         return true;
                     }
-                    return item.inspectionDate === new Date(query);
+                    return item.inspectionDate?.toLocaleString().split('T')[0] === query;
                 case 'engineer':
                     if (query === '') {
                         return true;
@@ -326,6 +326,9 @@ function Project() {
                     const matchingEngineer = engineerList.find(engineer => engineer.id === item.engineer as unknown as string);
                     return matchingEngineer ? `${matchingEngineer.firstName} ${matchingEngineer.lastName}`.toLowerCase().includes(query.toLowerCase()) : false;
                 case 'status':
+                    if (query === '') {
+                        return true;
+                    }
                     return item.status.toLowerCase() === query.toLowerCase();
                 default:
                     return false;
@@ -392,6 +395,11 @@ function Project() {
         navigate(-1);
     };
 
+    const cancel = () => {
+        setInEditMode(false);
+        viewProject();
+    }
+
     return (
         <div className='M-container'>
             {/* Delete Project Popup */}
@@ -401,6 +409,10 @@ function Project() {
             >
                 <div style={{ width: 450 }}>
                     <span className="M-popup-text M-text-color">{`Are you sure you want to delete project "${name}"?`}</span>
+                    <br /><span className="M-text-danger">NOTE: This will also delete:</span>
+                    <br /><span className="M-text-danger">- All inspections associated with this project</span>
+                    <br /><span className="M-text-danger">- All layouts associated with this project</span>
+                    <br /><span className="M-text-danger">- All photos associated with this project</span>
                     <div style={{ display: 'flex', justifyContent: 'center', flexDirection: 'row', gap: 75, marginTop: 35 }}>
                         <Button variant="secondary" type="button" onClick={() => { deleteProject() }} style={{ width: 100 }}>Yes</Button>
                         <Button variant="secondary" type="button" onClick={() => { setDeleteProjectPopupVisible(false) }} style={{ width: 100 }}>No</Button>
@@ -413,7 +425,9 @@ function Project() {
                 onRequestClose={() => { setDeleteInspectionPopupVisible(false) }}
             >
                 <div style={{ width: 450 }}>
-                    <span className="M-popup-text M-text-color">{`Are you sure you want to delete Inspection on Unit ${units.find(unit => unit.id === inspectionToDelete?.unit as unknown as string)?.number} by ${engineerList.find(engineer => engineer.id === inspectionToDelete?.engineer as unknown as string)?.firstName} ${engineerList.find(engineer => engineer.id === inspectionToDelete?.engineer as unknown as string)?.lastName}?`}</span>
+                    <span className="M-popup-text M-text-color">{`Are you sure you want to delete Inspection on Unit ${units.find(unit => unit.id === inspectionToDelete?.unit as unknown as string)?.number} by ${engineerList.find(engineer => engineer.id === inspectionToDelete?.engineer as unknown as string)?.firstName ?? 'Deleted'} ${engineerList.find(engineer => engineer.id === inspectionToDelete?.engineer as unknown as string)?.lastName ?? 'User'}?`}</span>
+                    <br /><span className="M-text-danger">NOTE: This will also delete:</span>
+                    <br /><span className="M-text-danger">- All photos associated with this inspection</span>
                     <div style={{ display: 'flex', justifyContent: 'center', flexDirection: 'row', gap: 75, marginTop: 35 }}>
                         <Button variant="secondary" type="button" onClick={() => { deleteInspection() }} style={{ width: 100 }}>Yes</Button>
                         <Button variant="secondary" type="button" onClick={() => { setDeleteInspectionPopupVisible(false) }} style={{ width: 100 }}>No</Button>
@@ -597,7 +611,6 @@ function Project() {
                                                 value={assignedEngineer.unitSchema}
                                                 onChange={(e) => { updateEngineerData(index, { engineerId: assignedEngineer.engineerId, unitNumbers: parseNumberPattern(e.target.value), unitSchema: e.target.value }) }}
                                                 placeholder="Ex: 101, 107-155:odds, 200-300:step=10"
-                                            //required
                                             />
                                             <Button variant="danger" type="button" onClick={() => removeEngineer(index)}>Remove</Button>
                                         </div>
@@ -658,7 +671,7 @@ function Project() {
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 20 }}>
                             <Button variant="secondary" type="submit" disabled={isUploading}>Submit</Button>
-                            <Button variant="danger" type="button" onClick={() => setInEditMode(false)}>Cancel</Button>
+                            <Button variant="danger" type="button" onClick={() => cancel()}>Cancel</Button>
                         </div>
                     </form>
                     :
@@ -794,6 +807,7 @@ function Project() {
                                 <option value="" disabled className="M-section-text M-text-color">Sort by status...</option>
                                 <option value="" className="M-section-text M-text-color" selected={statusSearchQuery === ''}>All</option>
                                 <option value="completed" className="M-section-text M-text-color" selected={statusSearchQuery === 'completed'}>Completed</option>
+                                <option value="started" className="M-section-text M-text-color" selected={statusSearchQuery === 'started'}>Started</option>
                                 <option value="not-started" className="M-section-text M-text-color" selected={statusSearchQuery === 'not-started'}>Not Started</option>
                             </select>
                         </td>
@@ -803,9 +817,9 @@ function Project() {
                     {filteredInspectionsList.map((inspection, index) => (
                         <tr className='M-table-tr'>
                             <td className='M-table-td M-section-text M-text-color'>{units.find(unit => unit.id === inspection.unit as unknown as string)?.number}</td>
-                            <td className='M-table-td M-section-text M-text-color'>{inspection.inspectionDate ? inspection.inspectionDate.toISOString() : 'Not inspected'}</td>
-                            <td className='M-table-td M-section-text M-text-color'>{engineerList.find(engineer => engineer.id === inspection.engineer as unknown as string)?.firstName} {engineerList.find(engineer => engineer.id === inspection.engineer as unknown as string)?.lastName}</td>
-                            <td className='M-table-td M-section-text M-text-color'>{inspection.status === 'completed' ? 'Completed' : 'Not Started'}</td>
+                            <td className='M-table-td M-section-text M-text-color'>{inspection.inspectionDate ? inspection.inspectionDate.toLocaleString().split('T')[0] : 'Not inspected'}</td>
+                            <td className='M-table-td M-section-text M-text-color'>{engineerList.find(engineer => engineer.id === inspection.engineer as unknown as string)?.firstName ?? 'Deleted'} {engineerList.find(engineer => engineer.id === inspection.engineer as unknown as string)?.lastName ?? 'User'}</td>
+                            <td className='M-table-td M-section-text M-text-color'>{inspection.status === 'completed' ? 'Completed' : inspection.status === 'started' ? 'Started' : 'Not Started'}</td>
                             <td className='M-table-td' style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
                                 <Button variant="secondary" type="button" onClick={() => { navigate(`/auth/inspections/${inspection.id}`) }} style={{ width: 80 }}>View</Button>
                                 <Button variant="danger" type="button" onClick={() => { setInspectionToDelete(inspection); setDeleteInspectionPopupVisible(true); }} style={{ width: 100 }}>Delete</Button>

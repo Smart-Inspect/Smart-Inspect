@@ -42,7 +42,7 @@ function Building() {
                 case 'number':
                     return item.number.toLowerCase().includes(query.toLowerCase());
                 case 'inspections':
-                    return item.inspections.map(inspections => inspections.inspectionDate.toDateString()).join(' ').toLowerCase().includes(query.toLowerCase());
+                    return item.inspections.map(inspections => inspections.inspectionDate?.toLocaleString().split('T')[0]).join(' ').toLowerCase().includes(query.toLowerCase());
                 default:
                     return false;
             }
@@ -161,6 +161,13 @@ function Building() {
             >
                 <div style={{ width: 450 }}>
                     <span className="M-popup-text M-text-color">{`Are you sure you want to delete building "${name}"?`}</span>
+                    <br /><span className="M-text-danger">NOTE: This will also delete:</span>
+                    <br /><span className="M-text-danger">- All units associated with this building</span>
+                    <br /><span className="M-text-danger">- All inspections associated with those units</span>
+                    <br /><span className="M-text-danger">- All projects associated with this building</span>
+                    <br /><span className="M-text-danger">- All inspections associated with those projects</span>
+                    <br /><span className="M-text-danger">- All layouts associated with those projects</span>
+                    <br /><span className="M-text-danger">- All photos associated with those projects</span>
                     <div style={{ display: 'flex', justifyContent: 'center', flexDirection: 'row', gap: 75, marginTop: 35 }}>
                         <Button variant="secondary" type="button" onClick={() => { deleteBuilding() }} style={{ width: 100 }}>Yes</Button>
                         <Button variant="secondary" type="button" onClick={() => { setDeleteBuildingPopupVisible(false) }} style={{ width: 100 }}>No</Button>
@@ -174,6 +181,9 @@ function Building() {
             >
                 <div style={{ width: 450 }}>
                     <span className="M-popup-text M-text-color">{`Are you sure you want to delete Unit ${unitToDelete?.number}?`}</span>
+                    <br /><span className="M-text-danger">NOTE: This will also delete:</span>
+                    <br /><span className="M-text-danger">- All inspections associated with this unit</span>
+                    <br /><span className="M-text-danger">- All photos associated with those inspections</span>
                     <div style={{ display: 'flex', justifyContent: 'center', flexDirection: 'row', gap: 75, marginTop: 35 }}>
                         <Button variant="secondary" type="button" onClick={() => { deleteUnit() }} style={{ width: 100 }}>Yes</Button>
                         <Button variant="secondary" type="button" onClick={() => { setDeleteUnitPopupVisible(false) }} style={{ width: 100 }}>No</Button>
@@ -361,7 +371,7 @@ function Building() {
                             <td className='M-table-td M-section-text M-text-color'>{unit.number}</td>
                             <td className='M-table-td M-section-text M-text-color' style={{ display: 'flex', flexDirection: 'column', gap: 30 }}>{unit.inspections.filter(inspection => inspection.status === 'completed').length > 0 ? unit.inspections.map(inspection => (
                                 <div key={inspection.inspectionDate.toString()} style={{ display: 'flex', flexDirection: 'row', gap: 20 }}>
-                                    <span style={{ alignSelf: 'center' }}>{inspection.inspectionDate.toDateString()}</span>
+                                    <span style={{ alignSelf: 'center' }}>{inspection.inspectionDate.toLocaleString().split('T')[0]}</span>
                                     <Button variant="secondary" type="button" onClick={() => { navigate(`/auth/inspections/${inspection.id}`) }} style={{ width: 80 }}>View</Button>
                                 </div>
                             )) : <div style={{ marginTop: 15 }}>No completed inspections</div>}</td>

@@ -1,7 +1,6 @@
 import React, { createContext, useState, useEffect, useContext, ReactNode } from 'react';
 import * as SecureStore from 'expo-secure-store';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { AppState } from 'react-native';
 
 interface AuthContextType {
     isAuthenticated: boolean;
@@ -24,43 +23,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     useEffect(() => {
         async function fetchRefreshToken() {
-            const id = await AsyncStorage.getItem('id');
-            const isVerified = await AsyncStorage.getItem('isVerified');
-            const accessToken = await AsyncStorage.getItem('accessToken');
-            const refreshToken = await SecureStore.getItemAsync('refreshToken');
-            if (id && refreshToken) {
-                setId(id);
-                setAccessToken(accessToken ? accessToken : null);
+            const refreshToken = undefined;//await SecureStore.getItemAsync('refreshToken');
+            if (refreshToken) {
                 setRefreshToken(refreshToken);
                 setIsAuthenticated(true);
                 console.log('[AUTH] User is authenticated');
             } else {
-                console.log('[AUTH] User is not authenticated');
                 setIsAuthenticated(false);
-            }
-
-            if (isVerified) {
-                setIsVerified(isVerified === 'true');
-                console.log('[AUTH] User is verified');
-            } else {
-                console.log('[AUTH] User is not verified');
-                setIsVerified(false);
+                console.log('[AUTH] User is not authenticated');
             }
         }
         fetchRefreshToken();
-    }, []);
-
-    useEffect(() => {
-        const handleAppStateChange = async (nextAppState: string) => {
-            if (nextAppState === 'background' || nextAppState === 'inactive') {
-                await AsyncStorage.removeItem('accessToken');
-            }
-        };
-
-        const appStateSubscription = AppState.addEventListener('change', handleAppStateChange);
-        return () => {
-            appStateSubscription.remove();
-        };
     }, []);
 
     const login = async (id: string, accessToken: string, refreshToken: string, isAccountVerified: boolean): Promise<void> => {
@@ -69,9 +42,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setId(id);
         await AsyncStorage.setItem('isVerified', isAccountVerified.toString());
         setIsVerified(isAccountVerified);
-        await SecureStore.setItemAsync('refreshToken', refreshToken);
+        //await SecureStore.setItemAsync('refreshToken', refreshToken);
         setRefreshToken(refreshToken);
-        await AsyncStorage.setItem('accessToken', accessToken);
         setAccessToken(accessToken);
     }
 
@@ -81,9 +53,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setId(null);
         await AsyncStorage.removeItem('isVerified');
         setIsVerified(false);
-        await SecureStore.deleteItemAsync('refreshToken');
+        //await SecureStore.deleteItemAsync('refreshToken');
         setRefreshToken(null);
-        await AsyncStorage.removeItem('accessToken');
         setAccessToken(null);
     }
 

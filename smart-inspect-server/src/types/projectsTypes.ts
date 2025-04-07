@@ -11,11 +11,6 @@ const projectType = {
 		engineerToUnits: t.array(t.strict({ engineerId: t.string, unitNumbers: t.array(t.string) })),
 		metricsSchema: t.array(t.strict({ name: t.string, fieldType: t.string, values: t.array(t.union([t.string, t.number])) }))
 	}),
-	ForUploadLayouts: t.strict({
-		files: types.optional(t.array(t.any)),
-		uploadCount: t.number,
-		timestamp: t.string
-	}),
 	ForEdit: t.strict({
 		name: types.optional(t.string),
 		description: types.optional(t.string),

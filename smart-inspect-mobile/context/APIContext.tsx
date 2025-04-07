@@ -1,6 +1,7 @@
 import React, { createContext, useContext, ReactNode } from 'react';
 import { useAuth } from './AuthContext';
 import { useNavigation } from 'expo-router';
+import * as SecureStore from 'expo-secure-store';
 import { ENV } from '@/utils/env';
 
 class Response {
@@ -14,7 +15,7 @@ class Response {
 }
 
 interface APIContextType {
-    request: (url: string, method: "GET" | "POST" | "PUT" | "DELETE", body: any | undefined, isAuthorized: boolean) => Promise<Response>;
+    request: (url: string, method: "GET" | "POST" | "PUT" | "DELETE", body: any | undefined, isAuthorized: boolean, abort?: AbortController, dynamicData?: boolean) => Promise<Response>;
 }
 
 const APIContext = createContext<APIContextType | undefined>(undefined);
@@ -23,60 +24,104 @@ export const APIProvider = ({ children }: { children: ReactNode }) => {
     const auth = useAuth();
     const navigation = useNavigation();
 
-    const request = async (url: string, method: "GET" | "POST" | "PUT" | "DELETE", body: any | undefined, isAuthorized: boolean, contentType: string = 'application/json'): Promise<Response> => {
-        return requestInternal(url, method, body, isAuthorized, auth.accessToken as string, contentType);
+    const request = async (url: string, method: "GET" | "POST" | "PUT" | "DELETE", body: any | undefined, isAuthorized: boolean, abort?: AbortController, dynamicData?: boolean): Promise<Response> => {
+        return requestInternal(url, method, body, isAuthorized, auth.accessToken as string, abort, dynamicData);
     }
 
-    const requestInternal = async (url: string, method: "GET" | "POST" | "PUT" | "DELETE", body: any | undefined, isAuthorized: boolean, accessToken: string, contentType: string): Promise<Response> => {
-        const response = await fetch(`${ENV.API_URL}/api/${url}`, {
-            method,
-            headers: {
-                Authorization: isAuthorized ? `Bearer ${accessToken}` : "",
-                "Content-Type": contentType,
-            },
-            body: body ? JSON.stringify(body) : undefined,
-        });
-
-        const data = response.status !== 204 ? await response.json() : null;
-        const returnVal = new Response(response.status, data);
-
-        // Handle unauthorized by getting new access token
-        if (isAuthorized && returnVal.status === 401) {
-            console.log('[API] Unauthorized, refreshing token');
-            const newAccessToken = await refreshToken();
-            if (newAccessToken) {
-                return await requestInternal(url, method, body, isAuthorized, newAccessToken, contentType);
+    const requestInternal = async (url: string, method: "GET" | "POST" | "PUT" | "DELETE", body: any | undefined, isAuthorized: boolean, accessToken: string, abort?: AbortController, dynamicData?: boolean): Promise<Response> => {
+        const signal = abort?.signal;
+        try {
+            let headers: HeadersInit | undefined;
+            let finalBody: BodyInit | null | undefined
+            if (dynamicData) {
+                headers = {
+                    Authorization: isAuthorized ? `Bearer ${accessToken}` : ""
+                }
+                finalBody = body ? body : undefined;
             } else {
-                navigation.navigate("landing" as never);
+                headers = {
+                    Authorization: isAuthorized ? `Bearer ${accessToken}` : "",
+                    "Content-Type": "application/json"
+                }
+                finalBody = body ? JSON.stringify(body) : undefined;
             }
-        }
 
-        return returnVal;
+            const response = await fetch(`${ENV.API_URL}/api/${url}`, {
+                method,
+                headers,
+                credentials: 'include',
+                body: finalBody,
+                signal
+            });
+
+            const data = response.status !== 204 ? dynamicData ? await response.blob() : await response.json() : null;
+            const returnVal = new Response(response.status, data);
+
+            // Handle unauthorized by getting new access token
+            if (isAuthorized && (returnVal.status === 401 && returnVal.data.error === 'Invalid token')) {
+                console.log('[API] Unauthorized, refreshing token');
+                const newAccessToken = await refreshToken(signal);
+                if (newAccessToken) {
+                    return await requestInternal(url, method, body, isAuthorized, newAccessToken);
+                } else {
+                    await auth.logout();
+                    navigation.reset({ index: 0, routes: [{ name: 'landing' as never }] });
+                }
+            }
+
+            if (isAuthorized && (returnVal.status === 403 && returnVal.data.error === 'Account not verified')) {
+                console.log('[API] Account not verified');
+                navigation.reset({ index: 1, routes: [{ name: 'landing' as never }, { name: 'verify' as never }] });
+            }
+
+            // Handle permission denied by logging out and redirecting to invalid permission page
+            if (isAuthorized && (returnVal.status === 403 && returnVal.data.error === 'Permission denied')) {
+                console.log('[API] Permission denied');
+                // Send logout request to invalidate refresh token
+                const body = {};
+                const result = await request('users/logout', 'POST', body, true, abort);
+                if (result.status === 204) {
+                    console.log('[API] Sent log out request');
+                } else if (result.status > 0) {
+                    console.log('[API] Failed to send log out request: ' + result.data.error);
+                }
+                await auth.logout();
+                navigation.reset({ index: 1, routes: [{ name: 'landing' as never }, { name: 'invalidpermission' as never }] });
+            }
+            return returnVal;
+        } catch (error) {
+            if (signal?.aborted) {
+                console.log('[API] Request aborted');
+                return new Response(0, { error: 'Request aborted' });
+            }
+
+            console.error('[API] Error:', error);
+            await auth.logout();
+            navigation.reset({ index: 0, routes: [{ name: 'landing' as never }] });
+            return new Response(503, { error: 'Service unavailable' });
+        }
     }
 
-    const refreshToken = async (): Promise<string | null> => {
-        const response = await fetch(`${ENV.API_URL}/api/refresh/`, {
+    const refreshToken = async (signal?: AbortSignal): Promise<string | null> => {
+        const response = await fetch(`${ENV.API_URL}/api/auth/refresh/`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
             },
-            body: JSON.stringify({ refreshToken: auth.refreshToken }),
+            credentials: 'include',
+            body: JSON.stringify({}), // Empty body because refresh token is in the cookie (DIFFERENT ON MOBILE APP)
+            signal
         });
 
         // Refresh token is no longer valid
         if (response.status === 401) {
-            console.log('[API] Refresh token is no longer valid, logging out');
-            await auth.logout();
+            console.log('[API] Refresh token is no longer valid');
             return null;
         }
 
         // Get new access token
         const data = await response.json();
-        if (auth.refreshToken) {
-            await auth.login(auth.id as string, data.accessToken, auth.refreshToken as string, auth.isVerified);
-        } else {
-            throw new Error("No refresh token and/or id found");
-        }
+        await auth.login(data.id, data.accessToken, auth.refreshToken ?? await SecureStore.getItemAsync('refreshToken') as string, data.userAccountVerified);
 
         return data.accessToken;
     }

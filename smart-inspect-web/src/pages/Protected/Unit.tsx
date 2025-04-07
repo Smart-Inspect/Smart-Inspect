@@ -110,13 +110,16 @@ function Unit() {
                     if (query === '') {
                         return true;
                     }
-                    return item.inspectionDate === new Date(query);
+                    return item.inspectionDate?.toLocaleString().split('T')[0] === query;
                 case 'engineer':
                     if (query === '') {
                         return true;
                     }
                     return item.engineer ? `${item.engineer.firstName} ${item.engineer.lastName}`.toLowerCase().includes(query.toLowerCase()) : false;
                 case 'status':
+                    if (query === '') {
+                        return true;
+                    }
                     return item.status.toLowerCase() === query.toLowerCase();
                 default:
                     return false;
@@ -137,6 +140,11 @@ function Unit() {
         navigate(-1);
     }
 
+    const cancel = () => {
+        setInEditMode(false);
+        fetchUnitInfo();
+    }
+
     return (
         <div className='M-container'>
             {/* Delete Unit Popup */}
@@ -146,6 +154,9 @@ function Unit() {
             >
                 <div style={{ width: 450 }}>
                     <span className="M-popup-text M-text-color">{`Are you sure you want to delete Unit ${number}?`}</span>
+                    <br /><span className="M-text-danger">NOTE: This will also delete:</span>
+                    <br /><span className="M-text-danger">- All inspections associated with this unit</span>
+                    <br /><span className="M-text-danger">- All photos associated with those inspections</span>
                     <div style={{ display: 'flex', justifyContent: 'center', flexDirection: 'row', gap: 75, marginTop: 35 }}>
                         <Button variant="secondary" type="button" onClick={() => { deleteUnit() }} style={{ width: 100 }}>Yes</Button>
                         <Button variant="secondary" type="button" onClick={() => { setDeleteUnitPopupVisible(false) }} style={{ width: 100 }}>No</Button>
@@ -159,6 +170,8 @@ function Unit() {
             >
                 <div style={{ width: 450 }}>
                     <span className="M-popup-text M-text-color">{`Are you sure you want to delete the Inspection performed by ${inspectionToDelete?.engineer.firstName} ${inspectionToDelete?.engineer.lastName}?`}</span>
+                    <br /><span className="M-text-danger">NOTE: This will also delete:</span>
+                    <br /><span className="M-text-danger">- All photos associated with this inspection</span>
                     <div style={{ display: 'flex', justifyContent: 'center', flexDirection: 'row', gap: 75, marginTop: 35 }}>
                         <Button variant="secondary" type="button" onClick={() => { deleteInspection() }} style={{ width: 100 }}>Yes</Button>
                         <Button variant="secondary" type="button" onClick={() => { setDeleteInspectionPopupVisible(false) }} style={{ width: 100 }}>No</Button>
@@ -201,7 +214,7 @@ function Unit() {
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 10, marginBottom: 40, gap: 20 }}>
                             <Button variant="secondary" type="submit">Submit</Button>
-                            <Button variant="danger" type="button" onClick={() => setInEditMode(false)}>Cancel</Button>
+                            <Button variant="danger" type="button" onClick={() => cancel()}>Cancel</Button>
                         </div>
                     </form>
                     :
@@ -271,6 +284,7 @@ function Unit() {
                                 <option value="" disabled className="M-section-text M-text-color">Sort by status...</option>
                                 <option value="" className="M-section-text M-text-color" selected={statusSearchQuery === ''}>All</option>
                                 <option value="completed" className="M-section-text M-text-color" selected={statusSearchQuery === 'completed'}>Completed</option>
+                                <option value="started" className="M-section-text M-text-color" selected={statusSearchQuery === 'started'}>Started</option>
                                 <option value="not-started" className="M-section-text M-text-color" selected={statusSearchQuery === 'not-started'}>Not Started</option>
                             </select>
                         </td>
@@ -279,7 +293,7 @@ function Unit() {
                     </tr>
                     {filteredInspections.map((inspection, index) => (
                         <tr className='M-table-tr'>
-                            <td className='M-table-td M-section-text M-text-color'>{inspection.inspectionDate ? inspection.inspectionDate.toISOString() : 'Not inspected'}</td>
+                            <td className='M-table-td M-section-text M-text-color'>{inspection.inspectionDate ? inspection.inspectionDate.toLocaleString().split('T')[0] : 'Not inspected'}</td>
                             <td className='M-table-td M-section-text M-text-color'>{inspection.engineer.firstName} {inspection.engineer.lastName}</td>
                             <td className='M-table-td M-section-text M-text-color'>{inspection.status === 'completed' ? 'Completed' : 'Not Started'}</td>
                             <td className='M-table-td' style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>

@@ -50,15 +50,19 @@ export function imageUpload({ allowedFileTypes }: ImageUploadOptions) {
 					res.status(400).json({ error: 'No file(s) uploaded' });
 					return;
 				}
-				const { uploadCount, timestamps } = req.body;
+				const { uploadCount, timestamps, captions } = req.body;
 				// I have to check this manually (without the types middleware) because their are files attached to upload (form-data)
+				// Captions are optional, so I don't check for them
 				if (!uploadCount || !timestamps) {
+					console.log('Invalid request body:', req.body);
 					res.status(400).json({ error: `Invalid request body` });
 					return;
 				}
 				const timestampArray = JSON.parse(timestamps);
+				const captionArray = captions ? JSON.parse(captions) : null;
 				const uploadedImages = req.files as Express.Multer.File[];
-				if (uploadedImages.length !== timestampArray.length) {
+				if (uploadedImages.length !== timestampArray.length || uploadedImages.length !== parseInt(uploadCount)) {
+					console.log('Number of timestamps does not match number of uploaded images: ', uploadedImages.length, timestampArray.length, uploadCount);
 					res.status(400).json({ error: 'Number of timestamps does not match number of uploaded images' });
 					return;
 				}
@@ -67,6 +71,10 @@ export function imageUpload({ allowedFileTypes }: ImageUploadOptions) {
 					const file = uploadedImages[i] as Express.Multer.File;
 					const timestamp = new Date(timestampArray[i]);
 					const image = new Image({ name: file.originalname, url: file.key, type: file.mimetype, timestamp, uploader: user }); // uploader: user });
+					// Set the caption if it exists
+					if (captionArray && captionArray[i]) {
+						image.caption = captionArray[i];
+					}
 					await image.save();
 					images.push(image);
 				}

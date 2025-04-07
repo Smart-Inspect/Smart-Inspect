@@ -19,7 +19,7 @@ export interface IInspection extends Document {
 	notes: string;
 	photos: IImage['_id'][];
 	metrics: IMetric[];
-	status: 'completed' | 'not-started';
+	status: 'completed' | 'started' | 'not-started';
 }
 
 const inspectionSchema: Schema<IInspection> = new Schema({
@@ -39,7 +39,7 @@ const inspectionSchema: Schema<IInspection> = new Schema({
 		],
 		default: []
 	},
-	status: { type: String, enum: ['completed', 'not-started'], default: 'not-started' }
+	status: { type: String, enum: ['completed', 'started', 'not-started'], default: 'not-started' }
 });
 
 // Add a compound unique index for engineer, unit, and project

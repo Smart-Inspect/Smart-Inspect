@@ -38,6 +38,9 @@ function Projects() {
                 case 'building':
                     return item.building.name.toLowerCase().includes(query.toLowerCase());
                 case 'status':
+                    if (query === '') {
+                        return true;
+                    }
                     return item.status.toLowerCase() === query.toLowerCase();
                 default:
                     return false;
@@ -89,6 +92,10 @@ function Projects() {
             >
                 <div style={{ width: 450 }}>
                     <span className="M-popup-text M-text-color">{`Are you sure you want to delete project "${projectToDelete?.name}"?`}</span>
+                    <br /><span className="M-text-danger">NOTE: This will also delete:</span>
+                    <br /><span className="M-text-danger">- All inspections associated with this project</span>
+                    <br /><span className="M-text-danger">- All layouts associated with this project</span>
+                    <br /><span className="M-text-danger">- All photos associated with this project</span>
                     <div style={{ display: 'flex', justifyContent: 'center', flexDirection: 'row', gap: 75, marginTop: 35 }}>
                         <Button variant="secondary" type="button" onClick={() => { deleteProject(projectToDelete) }} style={{ width: 100 }}>Yes</Button>
                         <Button variant="secondary" type="button" onClick={() => { setDeleteProjectPopupVisible(false); }} style={{ width: 100 }}>No</Button>

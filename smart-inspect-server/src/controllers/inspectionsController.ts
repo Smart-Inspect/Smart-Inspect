@@ -3,6 +3,7 @@ import Inspection from '../models/Inspection';
 import inspectionService from '../business/inspectionsService';
 import photoService from '../business/photosService';
 import layoutService from '../business/layoutsService';
+import { IImage } from '../models/Image';
 
 export async function viewInspection(req: Request, res: Response) {
 	const { id } = req.params;
@@ -15,18 +16,26 @@ export async function viewInspection(req: Request, res: Response) {
 		engineer: inspection.engineer,
 		unit: inspection.unit,
 		project: inspection.project,
-		inspectionDate: inspection.inspectionDate,
+		inspectionDate: inspection.inspectionDate ? inspection.inspectionDate.getTime().toString() : null,
 		layout: inspection.layout,
 		notes: inspection.notes,
-		photos: inspection.photos,
-		metrics: inspection.metrics,
+		photos: (inspection.photos as IImage[]).map(photo => ({
+			id: photo._id,
+			name: photo.name,
+			url: photo.url,
+			type: photo.type,
+			caption: photo.caption,
+			timestamp: photo.timestamp ? photo.timestamp.getTime().toString() : null,
+			uploadedAt: photo.uploadedAt ? photo.uploadedAt.getTime().toString() : null
+		})),
+		metrics: inspection.metrics.map(metric => ({ name: metric.name, value: metric.value })),
 		status: inspection.status
 	});
 }
 
 export async function downloadLayout(req: Request, res: Response) {
-	const { id, layoutId } = req.params;
-	const layout = await layoutService.download({ projectId: id, layoutId }, req, res);
+	const { id } = req.params;
+	const layout = await layoutService.downloadFromInspection({ inspectionId: id }, req, res);
 	if (!layout) {
 		return;
 	}
@@ -75,7 +84,7 @@ export async function deletePhotos(req: Request, res: Response) {
 	if (!result) {
 		return;
 	}
-	res.status(200).json({ message: 'Layout(s) deleted' });
+	res.status(200).json({ message: 'Photo(s) deleted' });
 }
 
 export async function viewAssignedInspections(req: Request, res: Response) {
@@ -91,7 +100,7 @@ export async function viewAllInspections(req: Request, res: Response) {
 	try {
 		// Get all inspections
 		// Only populating the building field for now
-		const inspections = await Inspection.find({}, 'name description building units engineers inspections createdAt updatedAt').populate('building').exec();
+		const inspections = await Inspection.find({}, 'engineer unit project inspectionDate layout notes photos metrics status').populate('unit').exec();
 		res.status(200).json(inspections);
 	} catch (error) {
 		console.error('Failed to get inspections:', error);

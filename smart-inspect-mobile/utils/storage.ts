@@ -1,7 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as SecureStore from "expo-secure-store";
 
-const secureStoreKeys: string[] = ["refreshToken"];
+const secureStoreKeys: string[] = ["refreshToken" /* Add more keys here as needed */];
 
 const storage = {
   clearAllStorage,

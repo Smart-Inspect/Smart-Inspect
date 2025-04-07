@@ -14,10 +14,11 @@ interface InputProps {
     required?: boolean;
     multiple?: boolean;
     accept?: string;
+    disabled?: boolean;
     forceWhite?: boolean; // This is to fix a bug on the login/signup pages where the eye icon stays black
 }
 
-const Input: React.FC<InputProps> = ({ variant, type, id, value, onChange, placeholder, className, style, required, multiple, accept, forceWhite }) => {
+const Input: React.FC<InputProps> = ({ variant, type, id, value, onChange, placeholder, className, style, required, multiple, accept, disabled, forceWhite }) => {
     const [passwordHidden, setPasswordHidden] = useState(true);
     const [typeWithPassword, setTypeWithPassword] = useState(type);
 
@@ -37,6 +38,7 @@ const Input: React.FC<InputProps> = ({ variant, type, id, value, onChange, place
                 style={style}
                 required={required}
                 className={`${styles[variant]} ${className}`}
+                disabled={disabled}
                 multiple={multiple}
                 accept={accept ? accept : 'image/*'}
             />

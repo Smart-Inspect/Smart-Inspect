@@ -4,6 +4,7 @@ import permissions from '../config/permissions';
 import { IImage } from '../models/Image';
 import imageService from './imagesService';
 import { ObjectId } from 'mongoose';
+import { IUser } from '../models/User';
 
 interface UploadParams {
 	inspectionId: string;
@@ -33,7 +34,7 @@ const photoService = {
 				await imageService.deleteMany({ ids: (images as IImage[]).map(image => (image._id as ObjectId).toString()) }, res);
 				return null;
 			}
-			if (inspection.engineer !== req.user?._id && !req.user?.permissions.includes(permissions.MANAGER)) {
+			if (!req.user?.permissions.includes(permissions.MANAGER) && req.user?.id !== ((inspection.engineer as IUser)._id as string).toString()) {
 				res.status(403).json({ error: 'Permission denied' });
 				await imageService.deleteMany({ ids: (images as IImage[]).map(image => (image._id as ObjectId).toString()) }, res);
 				return null;
@@ -54,11 +55,11 @@ const photoService = {
 				res.status(404).json({ error: 'Inspection not found' });
 				return false;
 			}
-			if (!(inspection.photos as IImage[]).map(image => image._id).includes(photoId)) {
-				res.status(404).json({ error: 'Image not found' });
+			if (!(inspection.photos as IImage[]).map(image => (image._id as string).toString()).includes(photoId)) {
+				res.status(404).json({ error: 'Photo not found' });
 				return false;
 			}
-			if (inspection.engineer !== req.user?._id && !req.user?.permissions.includes(permissions.MANAGER)) {
+			if (!req.user?.permissions.includes(permissions.MANAGER) && req.user?.id !== ((inspection.engineer as IUser)._id as string).toString()) {
 				res.status(403).json({ error: 'Permission denied' });
 				return false;
 			}

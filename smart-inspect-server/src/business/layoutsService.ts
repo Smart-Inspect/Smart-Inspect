@@ -5,6 +5,7 @@ import imageService from './imagesService';
 import { IUser } from '../models/User';
 import permissions from '../config/permissions';
 import { ObjectId } from 'mongoose';
+import Inspection from '../models/Inspection';
 
 interface UploadManyParams {
 	projectId: string;
@@ -13,6 +14,10 @@ interface UploadManyParams {
 interface DownloadParams {
 	projectId: string;
 	layoutId: string;
+}
+
+interface DownloadFromInspectionParams {
+	inspectionId: string;
 }
 
 interface DeleteManyParams {
@@ -54,13 +59,36 @@ const layoutService = {
 				res.status(404).json({ error: 'Layout not found' });
 				return false;
 			}
-			if (!(project.engineers as IUser[]).map(engineer => engineer._id).includes(req.user?._id) && !req.user?.permissions.includes(permissions.MANAGER)) {
+			if (!req.user?.permissions.includes(permissions.MANAGER) && !(project.engineers as IUser[]).map(engineer => (engineer._id as string).toString()).includes(req.user?.id)) {
 				res.status(403).json({ error: 'Permission denied' });
 				return false;
 			}
 			return await imageService.download({ id: layoutId }, res);
 		} catch (error) {
-			console.log(`Error downloading layout ${projectId}:`, error);
+			console.log(`Error downloading layout from project ${projectId}:`, error);
+			res.status(500).json({ error: 'Error downloading layout' });
+			return false;
+		}
+	},
+	async downloadFromInspection({ inspectionId }: DownloadFromInspectionParams, req: Request, res: Response): Promise<boolean> {
+		try {
+			const inspection = await Inspection.findOne({ _id: inspectionId }).populate('engineer').populate('layout').exec();
+			if (!inspection) {
+				res.status(404).json({ error: 'Inspection not found' });
+				return false;
+			}
+			const layoutId = ((inspection.layout as IImage)._id as string).toString();
+			if (!layoutId) {
+				res.status(404).json({ error: 'Layout not found' });
+				return false;
+			}
+			if (!req.user?.permissions.includes(permissions.MANAGER) && ((inspection.engineer as IUser)._id as string).toString() !== req.user?.id) {
+				res.status(403).json({ error: 'Permission denied' });
+				return false;
+			}
+			return await imageService.download({ id: layoutId }, res);
+		} catch (error) {
+			console.log(`Error downloading layout from inspection ${inspectionId}:`, error);
 			res.status(500).json({ error: 'Error downloading layout' });
 			return false;
 		}

@@ -3,13 +3,14 @@ import React from 'react';
 import { Text, TouchableOpacity, StyleSheet } from 'react-native';
 
 interface ButtonProps {
-    variant: 'primary' | 'primary-outline' | 'secondary' | 'danger';
+    variant: 'primary' | 'primary-outline' | 'secondary' | 'warning' | 'danger';
     text: string;
     onPress?: () => void;
+    disabled?: boolean;
     style?: object;
 }
 
-const Button: React.FC<ButtonProps> = ({ variant, text, onPress, style }) => {
+const Button: React.FC<ButtonProps> = ({ variant, text, onPress, disabled, style }) => {
     const color = useColor();
     const styles = getStyles(color.getColors());
 
@@ -29,6 +30,10 @@ const Button: React.FC<ButtonProps> = ({ variant, text, onPress, style }) => {
             buttonStyle = styles.secondary;
             buttonStyleText = styles.secondaryText;
             break;
+        case 'warning':
+            buttonStyle = styles.warning;
+            buttonStyleText = styles.warningText;
+            break;
         case 'danger':
             buttonStyle = styles.danger;
             buttonStyleText = styles.dangerText;
@@ -37,7 +42,7 @@ const Button: React.FC<ButtonProps> = ({ variant, text, onPress, style }) => {
     }
 
     return (
-        <TouchableOpacity style={[buttonStyle, style]} onPress={onPress}>
+        <TouchableOpacity style={[buttonStyle, style]} disabled={disabled} onPress={onPress}>
             <Text style={buttonStyleText}>{text}</Text>
         </TouchableOpacity>
     );
@@ -80,9 +85,8 @@ function getStyles(color: ColorTypes) {
             fontSize: 18,
         },
         secondary: {
-    //backgroundColor: '#053331',
             backgroundColor: color.buttonSecondary,
-            borderColor: color.border,
+            borderColor: color.borderColor,
             borderWidth: 1,
             padding: 8,
             borderRadius: 10,
@@ -91,7 +95,22 @@ function getStyles(color: ColorTypes) {
             //margin: 10,
         },
         secondaryText: {
-            color: color.text,
+            color: color.textColor,
+            fontFamily: 'Poppins',
+            fontSize: 16,
+        },
+        warning: {
+            backgroundColor: color.buttonWarning,
+            borderColor: color.buttonWarning,
+            borderWidth: 1,
+            padding: 8,
+            borderRadius: 10,
+            //width: 200,
+            alignItems: 'center',
+            //margin: 10,
+        },
+        warningText: {
+            color: color.textWarning,
             fontFamily: 'Poppins',
             fontSize: 16,
         },

@@ -27,7 +27,7 @@ export async function viewProject(req: Request, res: Response) {
 		units: project.units,
 		engineers: project.engineers,
 		inspections: project.inspections,
-		metricsSchema: project.metricsSchema,
+		metricsSchema: project.metricsSchema.map(metric => ({ name: metric.name, fieldType: metric.fieldType, values: metric.values })),
 		status: project.status,
 		createdAt: project.createdAt,
 		updatedAt: project.updatedAt
@@ -81,8 +81,7 @@ export async function deleteLayouts(req: Request, res: Response) {
 }
 
 export async function viewAssignedProjects(req: Request, res: Response) {
-	const { id } = req.params;
-	const projects = await projectService.viewAssigned({ engineerId: id }, res);
+	const projects = await projectService.viewAssigned({ engineerId: req.user?.id }, res);
 	if (!projects) {
 		return;
 	}

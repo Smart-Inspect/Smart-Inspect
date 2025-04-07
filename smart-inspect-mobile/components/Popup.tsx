@@ -7,9 +7,10 @@ interface ModalProps {
     visible: boolean;
     onRequestClose: () => void;
     children: React.ReactNode;
+    style?: object;
 }
 
-const Popup: React.FC<ModalProps> = ({ animationType, transparent, visible, onRequestClose, children }) => {
+const Popup: React.FC<ModalProps> = ({ animationType, transparent, visible, onRequestClose, children, style }) => {
     const color = useColor();
     const styles = getStyles(color.getColors());
 
@@ -27,7 +28,7 @@ const Popup: React.FC<ModalProps> = ({ animationType, transparent, visible, onRe
             <TouchableWithoutFeedback onPress={closeModal}>
                 <View style={styles.modalOverlay}>
                     <TouchableWithoutFeedback>
-                        <View style={styles.modalContent}>
+                        <View style={[styles.modalContent, style]}>
                             {children}
                         </View>
                     </TouchableWithoutFeedback>
@@ -46,7 +47,7 @@ function getStyles(color: ColorTypes) {
             backgroundColor: 'rgba(0, 0, 0, 0.5)', // Semi-transparent background
         },
         modalContent: {
-            backgroundColor: color.foreground,
+            backgroundColor: color.foregroundColor,
             padding: 20,
             borderRadius: 10,
             alignItems: 'center',

@@ -93,6 +93,7 @@ function UserView() {
             >
                 <div style={{ width: 450 }}>
                     <span className="M-popup-text M-text-color">{`Are you sure you want to delete user "${firstName} ${lastName}"?`}</span>
+                    <br /><span className="M-text-danger">NOTE: All data created by this user will NOT be deleted</span>
                     <div style={{ display: 'flex', justifyContent: 'center', flexDirection: 'row', gap: 75, marginTop: 35 }}>
                         <Button variant="secondary" type="button" onClick={() => { deleteUser() }} style={{ width: 100 }}>Yes</Button>
                         <Button variant="secondary" type="button" onClick={() => { setDeleteUserPopupVisible(false) }} style={{ width: 100 }}>No</Button>
@@ -162,8 +163,8 @@ function UserView() {
                                     <span className='M-section-text M-text-color'>Permissions</span>
                                     <label htmlFor="permissions" className='hidden-label'>Permissions</label>
                                     <select name="permissions" id="permissions" className="M-dropdown" required onChange={(e) => { setPermissions(e.target.value) }}>
-                                        <option value="manager" className="M-section-text M-text-color" selected={permissions === 'engineer'}>Engineer</option>
-                                        <option value="engineer" className="M-section-text M-text-color" selected={permissions === 'manager'}>Manager</option>
+                                        <option value="engineer" className="M-section-text M-text-color" selected={permissions === 'engineer'}>Engineer</option>
+                                        <option value="manager" className="M-section-text M-text-color" selected={permissions === 'manager'}>Manager</option>
                                     </select>
                                 </span>
                             </div>

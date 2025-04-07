@@ -83,6 +83,13 @@ function Buildings() {
             >
                 <div style={{ width: 450 }}>
                     <span className="M-popup-text M-text-color">{`Are you sure you want to delete building "${buildingToDelete?.name}"?`}</span>
+                    <br /><span className="M-text-danger">NOTE: This will also delete:</span>
+                    <br /><span className="M-text-danger">- All units associated with this building</span>
+                    <br /><span className="M-text-danger">- All inspections associated with those units</span>
+                    <br /><span className="M-text-danger">- All projects associated with this building</span>
+                    <br /><span className="M-text-danger">- All inspections associated with those projects</span>
+                    <br /><span className="M-text-danger">- All layouts associated with those projects</span>
+                    <br /><span className="M-text-danger">- All photos associated with those projects</span>
                     <div style={{ display: 'flex', justifyContent: 'center', flexDirection: 'row', gap: 75, marginTop: 35 }}>
                         <Button variant="secondary" type="button" onClick={() => { deleteBuilding(buildingToDelete) }} style={{ width: 100 }}>Yes</Button>
                         <Button variant="secondary" type="button" onClick={() => { setDeleteBuildingPopupVisible(false); }} style={{ width: 100 }}>No</Button>

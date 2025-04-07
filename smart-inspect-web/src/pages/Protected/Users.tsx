@@ -66,6 +66,7 @@ function Users() {
             >
                 <div style={{ width: 450 }}>
                     <span className="M-popup-text M-text-color">{`Are you sure you want to delete user "${userToDelete?.firstName} ${userToDelete?.lastName}"?`}</span>
+                    <br /><span className="M-text-danger">NOTE: All data created by this user will NOT be deleted</span>
                     <div style={{ display: 'flex', justifyContent: 'center', flexDirection: 'row', gap: 75, marginTop: 35 }}>
                         <Button variant="secondary" type="button" onClick={() => { deleteUser(userToDelete) }} style={{ width: 100 }}>Yes</Button>
                         <Button variant="secondary" type="button" onClick={() => { setDeleteUserPopupVisible(false) }} style={{ width: 100 }}>No</Button>

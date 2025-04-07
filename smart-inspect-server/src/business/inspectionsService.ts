@@ -33,7 +33,7 @@ interface EditParams {
 	layoutId?: string;
 	notes?: string;
 	metrics?: IMetric[];
-	status?: 'completed' | 'not-started';
+	status?: 'completed' | 'started' | 'not-started';
 }
 
 interface DeleteParams {
@@ -78,7 +78,6 @@ const inspectionService = {
 					inspections.push(existingInspection);
 				} else {
 					// Creating the new inspection
-					console.log('Creating new inspection: ', newMetrics);
 					const newInspection = new Inspection({ engineer, unit, project, metrics: newMetrics });
 					unit.inspections.push(newInspection);
 					project.inspections.push(newInspection);
@@ -98,14 +97,25 @@ const inspectionService = {
 	async view({ id }: ViewParams, req: Request, res: Response): Promise<IInspection | null> {
 		try {
 			// Getting the inspection
-			const inspection = await Inspection.findOne({ _id: id }).populate('project').populate('engineer').populate('unit').populate('layout').populate('photos').exec();
+			const inspection = await Inspection.findOne({ _id: id })
+				.populate('engineer')
+				.populate('unit')
+				.populate('layout')
+				.populate('photos')
+				.populate({
+					path: 'project', // Populate the project
+					populate: {
+						path: 'layouts' // Populate the layouts within the project
+					}
+				})
+				.exec();
 			// Checking if the inspection exists
 			if (!inspection) {
 				res.status(404).json({ error: 'Inspection not found' });
 				return null;
 			}
 			// Checking if the user has permission to view the inspection
-			if (req.user?._id !== (inspection.engineer as IUser)._id && !req.user?.permissions.includes(permissions.MANAGER)) {
+			if (!req.user?.permissions.includes(permissions.MANAGER) && req.user?.id !== ((inspection.engineer as IUser)._id as string).toString()) {
 				res.status(403).json({ error: 'Permission denied' });
 				return null;
 			}
@@ -144,7 +154,7 @@ const inspectionService = {
 				return null;
 			}
 			// Getting the inspections assigned to the engineer for the specified project
-			const inspections = await Inspection.find({ project, engineer }).exec();
+			const inspections = await Inspection.find({ project, engineer }).populate('unit').exec();
 			if (!inspections) {
 				res.status(404).json({ error: 'Inspections not found' });
 				return null;
@@ -166,7 +176,7 @@ const inspectionService = {
 				return null;
 			}
 			// Checking if the user has permission to edit the inspection
-			if (req.user?._id !== (inspection.engineer as IUser)._id && !req.user?.permissions.includes(permissions.MANAGER)) {
+			if (!req.user?.permissions.includes(permissions.MANAGER) && req.user?.id !== ((inspection.engineer as IUser)._id as string).toString()) {
 				res.status(403).json({ error: 'Permission denied' });
 				return null;
 			}

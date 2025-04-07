@@ -34,7 +34,6 @@ function VerifyUser() {
     }, [sentInitialEmail, users]);
 
     useEffect(() => {
-        console.log('VerifyUser Mounted');
         const controller = new AbortController();
 
         const intervalId = setInterval(async () => {
@@ -45,7 +44,6 @@ function VerifyUser() {
         resendVerifyEmail(controller);
 
         return () => {
-            console.log('VerifyUser Unmounted');
             clearInterval(intervalId);
             controller.abort();
         };
@@ -56,7 +54,7 @@ function VerifyUser() {
             <h1 className='L-title'>{title}</h1>
             <h3 className='L-description'>{content}</h3>
             <div className='L-container'>
-                <Button variant='primary' type="button" className='L-button' style={{ alignSelf: 'center' }} onClick={() => { resendVerifyEmail() }}>SEND EMAIL</Button>
+                <Button variant='primary' type="button" className='L-button' style={{ alignSelf: 'center' }} onClick={() => { resendVerifyEmail() }}>RESEND EMAIL</Button>
             </div>
         </div>
     );

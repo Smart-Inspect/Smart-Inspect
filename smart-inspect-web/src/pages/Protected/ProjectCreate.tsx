@@ -56,7 +56,7 @@ function ProjectCreate() {
     }
 
     const addEngineer = () => {
-        setAssignedEngineers([...assignedEngineers, { engineerId: engineerList[0].id, unitNumbers: [], unitSchema: '' }]);
+        setAssignedEngineers([...assignedEngineers, { engineerId: engineerList[0]?.id, unitNumbers: [], unitSchema: '' }]);
     }
 
     const removeEngineer = (index: number) => {
@@ -146,7 +146,7 @@ function ProjectCreate() {
             return;
         }
         setBuildingsList(result);
-        setBuilding(result[0].id);
+        setBuilding(result[0]?.id);
         console.log('Users fetched successfully');
     }, [buildings]);
 
@@ -271,11 +271,18 @@ function ProjectCreate() {
                             <span className='M-section-text M-text-color'>Building</span>
                             <label htmlFor="building" className='hidden-label'>Building</label>
                             <select name="building" id="building" className="M-dropdown" required onChange={(e) => { setBuilding(e.target.value) }}>
-                                {buildingsList.map((building) => {
-                                    return (
-                                        <option value={building.id} key={building.id} className="M-section-text M-text-color">{building.name}, {building.address}</option>
-                                    );
-                                })}
+                                {
+                                    buildingsList.length > 0 ?
+                                        <>
+                                            {buildingsList.map((building) => {
+                                                return (
+                                                    <option value={building.id} key={building.id} className="M-section-text M-text-color">{building.name}, {building.address}</option>
+                                                );
+                                            })}
+                                        </>
+                                        :
+                                        <option value="" disabled className="M-section-text M-text-color">No created buildings...</option>
+                                }
                             </select>
                         </span>
                     </div>
@@ -308,7 +315,7 @@ function ProjectCreate() {
                 <div className='M-section M-border-color' style={{ marginBottom: 25 }}>
                     <div className='M-section-entry' style={{ marginBottom: 15, marginTop: 25, paddingLeft: '3%', paddingRight: '3%' }}>
                         <span className='M-section-text M-text-color' style={{ display: 'flex', flexDirection: 'column', marginBottom: 10 }}>Units that have been assigned:<br style={{ marginTop: 10 }} />{assignedEngineers.map((assignedEngineer, _) => (
-                            <span className={duplicateUnitsFound || duplicateEngineersFound ? 'M-text-warning' : 'M-text-color'}>{engineerList.filter(engineer => engineer.id === assignedEngineer.engineerId)[0].firstName} {engineerList.filter(engineer => engineer.id === assignedEngineer.engineerId)[0].lastName}: {assignedEngineer.unitNumbers.join(', ')}</span>
+                            <span className={duplicateUnitsFound || duplicateEngineersFound ? 'M-text-warning' : 'M-text-color'}>{engineerList.filter(engineer => engineer.id === assignedEngineer.engineerId)[0]?.firstName} {engineerList.filter(engineer => engineer.id === assignedEngineer.engineerId)[0]?.lastName}: {assignedEngineer.unitNumbers.join(', ')}</span>
                         ))}<br style={{ marginTop: 10 }} />Total Units: {assignedEngineers.reduce((acc, curr) => acc + curr.unitNumbers.length, 0)}</span>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                             {duplicateUnitsFound ? <span className='M-section-text M-text-danger'>WARNING: Duplicate units found</span> : <></>}
@@ -329,11 +336,18 @@ function ProjectCreate() {
                             <span className='M-section-content'>
                                 <label htmlFor={`engineer-${index}`} className='hidden-label'>Engineer</label>
                                 <select name={`engineer-${index}`} id={`engineer-${index}`} className="M-dropdown" onChange={(e) => { updateEngineerData(index, { engineerId: e.target.value, unitNumbers: assignedEngineer.unitNumbers, unitSchema: assignedEngineer.unitSchema }) }} required>
-                                    {engineerList.map((engineer) => {
-                                        return (
-                                            <option value={engineer.id} key={engineer.id} className="M-section-text M-text-color" selected={engineer.id === assignedEngineer.engineerId}>{engineer.firstName} {engineer.lastName}, {engineer.email}</option>
-                                        );
-                                    })}
+                                    {engineerList.length > 0 ?
+                                        <>
+                                            {engineerList.map((engineer) => {
+                                                return (
+                                                    <option value={engineer.id} key={engineer.id} className="M-section-text M-text-color" selected={engineer.id === assignedEngineer.engineerId}>{engineer.firstName} {engineer.lastName}, {engineer.email}</option>
+                                                );
+                                            })}
+                                        </>
+                                        :
+                                        <option value="" disabled className="M-section-text M-text-color">No created engineers...</option>
+                                    }
+
                                 </select>
                                 <div style={{ display: 'flex', flexDirection: 'row', gap: 25 }}>
                                     <Input
@@ -343,6 +357,7 @@ function ProjectCreate() {
                                         value={assignedEngineer.unitSchema}
                                         onChange={(e) => { updateEngineerData(index, { engineerId: assignedEngineer.engineerId, unitNumbers: parseNumberPattern(e.target.value), unitSchema: e.target.value }) }}
                                         placeholder="Ex: 101, 107-155:odds, 200-300:step=10"
+                                        disabled={engineerList.length === 0}
                                     />
                                     <Button variant="danger" type="button" onClick={() => removeEngineer(index)}>Remove</Button>
                                 </div>

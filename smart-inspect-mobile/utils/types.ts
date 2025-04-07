@@ -61,14 +61,14 @@ export interface IBuilding {
 }
 
 export interface IImage {
-  id: string;
+  id: string | undefined;
   name: string;
   url: string; // The URL of the uploaded image in the cloud storage (should get swapped with the actual image url AKA the one to use in the <img> tag)
   type: string;
-  uploader: IUser;
-  caption: string;
+  uploader: IUser | undefined;
+  caption: string | undefined;
   timestamp: Date;
-  uploadedAt: Date;
+  uploadedAt: Date | undefined;
 }
 
 export interface IMetricsSchema {

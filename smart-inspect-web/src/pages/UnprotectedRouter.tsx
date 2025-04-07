@@ -29,7 +29,7 @@ function UnprotectedRouter() {
         if (auth.isAuthenticated && auth.isVerified && window.location.pathname !== '/auth/projects') {
             navigate('/auth/projects');
         } else if (auth.isAuthenticated && !auth.isVerified && window.location.pathname !== '/verify') {
-            console.log('User is authenticated but not verified, redirecting to /l/verify');
+            console.log('User is authenticated but not verified, redirecting to /verify');
             navigate('/verify');
         }
     }, [auth.isAuthenticated, auth.isVerified, navigate]);

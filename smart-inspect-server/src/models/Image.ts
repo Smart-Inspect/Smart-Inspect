@@ -8,6 +8,7 @@ export interface IImage extends Document {
 	url: string; // The URL of the uploaded image in the cloud storage
 	type: string;
 	uploader: IUser['_id'];
+	caption: string;
 	timestamp: Date;
 	uploadedAt: Date;
 }
@@ -17,6 +18,7 @@ const imageSchema: Schema = new Schema({
 	url: { type: String, required: true }, // The URL of the uploaded image in the cloud storage
 	type: { type: String, required: true },
 	uploader: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+	caption: { type: String, required: false },
 	timestamp: { type: Date, required: true },
 	uploadedAt: { type: Date, default: Date.now }
 });

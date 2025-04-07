@@ -27,15 +27,13 @@ async function main() {
 	// TODO: FIX CORS FOR PRODUCTION OR REMOVE IT
 	if (BUILD_TYPE === 'development') {
 		console.log('[APP] Setting up CORS for development');
-		const corsOptions = {
-			origin: process.env.WEB_URL,
-			methods: ['GET', 'POST', 'PUT', 'DELETE'],
-			allowedHeaders: ['Content-Type'],
-			credentials: false
-		};
-
-		app.use(cors(corsOptions));
-		app.options('*', cors(corsOptions));
+		app.use(
+			cors({
+				origin: process.env.WEB_URL,
+				methods: 'GET, PUT, POST, DELETE',
+				credentials: true
+			})
+		);
 	}
 
 	// Database Connection

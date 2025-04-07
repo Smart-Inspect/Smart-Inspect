@@ -1,16 +1,15 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import Button from '@/components/Button';
 import InputField from '@/components/InputField';
 import { View, StyleSheet, Image, Text, TouchableOpacity, ScrollView } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { useNavigation } from 'expo-router';
 import { useState } from 'react';
-import { useAPI } from '@/context/APIContext';
-
+import { useRequests } from '@/context/RequestsContext';
 
 export default function SignUpPage() {
     const navigation = useNavigation();
-    const api = useAPI();
+    const { users } = useRequests();
 
     const [firstNameText, setFirstNameText] = useState('');
     const [lastNameText, setLastNameText] = useState('');
@@ -22,11 +21,12 @@ export default function SignUpPage() {
     const [signupFailed, setSignupFailed] = useState(false);
 
     function handleBack() {
+        navigation.reset({ index: 1, routes: [{ name: 'landing' as never }, { name: 'signup' as never }], });
         navigation.goBack();
     }
 
     function handleLogin() {
-        navigation.navigate('login' as never);
+        navigation.reset({ index: 1, routes: [{ name: 'landing' as never }, { name: 'login' as never }] });
     }
 
     async function handleSignUp() {
@@ -62,20 +62,14 @@ export default function SignUpPage() {
             return;
         }
 
-        const body = {
-            email: emailText,
-            password: passwordText,
-            firstName: firstNameText,
-            lastName: lastNameText
+        if (await users.create(emailText, passwordText, firstNameText, lastNameText)) {
+            console.log('Sign up successful');
+            handleBack();
         }
-
-        const response = await api.request('users/create', 'POST', body, false);
-        if (response.status !== 201) {
-            console.log('Sign up failed: ' + response.data.error);
-            return;
+        else {
+            console.log('Sign Up failed');
+            setSignupFailed(true);
         }
-        console.log('Sign Up successful');
-        navigation.navigate('login' as never);
     }
 
     return (

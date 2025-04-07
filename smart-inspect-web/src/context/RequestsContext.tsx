@@ -43,9 +43,9 @@ interface RequestsContextType {
     }
     inspections: {
         view: (id: string, abort?: AbortController) => Promise<any | 'fail' | 'abort'>,
-        downloadLayout: (id: string, layoutId: string, abort?: AbortController) => Promise<any | 'fail' | 'abort'>,
+        downloadLayout: (id: string, abort?: AbortController) => Promise<any | 'fail' | 'abort'>,
         downloadPhoto: (id: string, photoId: string, abort?: AbortController) => Promise<any | 'fail' | 'abort'>,
-        edit: (id: string, notes: string, status: 'completed' | 'not-started') => Promise<boolean>,
+        edit: (id: string, notes: string, status: 'completed' | 'started' | 'not-started') => Promise<boolean>,
         delete: (id: string) => Promise<boolean>,
         deletePhotos: (id: string, photoIds: string[]) => Promise<boolean>,
     }
@@ -407,8 +407,8 @@ export const RequestsProvider = ({ children }: { children: ReactNode }) => {
                 return 'abort';
             }
         },
-        downloadLayout: async (id: string, layoutId: string, abort?: AbortController) => {
-            const response = await api.request(`inspections/view/${id}/download-layout/${layoutId}`, 'GET', null, true, abort, true);
+        downloadLayout: async (id: string, abort?: AbortController) => {
+            const response = await api.request(`inspections/view/${id}/download-layout`, 'GET', null, true, abort, true);
             if (response.status === 200) {
                 return response.data;
             } else if (response.status > 0) {
@@ -429,7 +429,7 @@ export const RequestsProvider = ({ children }: { children: ReactNode }) => {
                 return 'abort';
             }
         },
-        edit: async (id: string, notes: string, status: 'completed' | 'not-started') => {
+        edit: async (id: string, notes: string, status: 'completed' | 'started' | 'not-started') => {
             const body = {
                 notes,
                 status
@@ -454,10 +454,11 @@ export const RequestsProvider = ({ children }: { children: ReactNode }) => {
             }
         },
         deletePhotos: async (id: string, photoIds: string[]) => {
+            console.log('Deleting photos: ' + photoIds);
             const body = {
                 photoIds
             }
-            const response = await api.request(`inspections/delete/${id}/delete-layouts`, 'DELETE', body, true);
+            const response = await api.request(`inspections/delete/${id}/delete-photos`, 'DELETE', body, true);
             if (response.status === 200) {
                 displayNotification('success', response.data.message);
                 return true;

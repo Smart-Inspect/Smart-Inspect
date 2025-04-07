@@ -1,51 +1,51 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import Button from '@/components/Button';
 import InputField from '@/components/InputField';
-import { View, StyleSheet, Image, Text, TouchableOpacity, ScrollView } from 'react-native';
+import { View, StyleSheet, Image, Text, TouchableOpacity } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { useNavigation } from 'expo-router';
 import { useState } from 'react';
-import { useAuth } from '@/context/AuthContext';
-import { useAPI } from '@/context/APIContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
+import { useRequests } from '@/context/RequestsContext';
 
 export default function LoginPage() {
     const navigation = useNavigation();
-    const auth = useAuth();
-    const api = useAPI();
+    const { users } = useRequests();
 
     const [emailText, setEmailText] = useState('');
     const [passwordText, setPasswordText] = useState('');
+    const [requiredFieldEmpty, setRequiredFieldEmpty] = useState({ email: false, password: false });
     const [loginFailed, setLoginFailed] = useState(false);
 
     function handleBack() {
+        navigation.reset({ index: 1, routes: [{ name: 'landing' as never }, { name: 'login' as never }], });
         navigation.goBack();
     }
 
+    function goToApp() {
+        navigation.reset({ index: 0, routes: [{ name: '(tabs)' as never }] });
+    }
+
     async function handleLogin() {
-        const body = {
-            email: emailText,
-            password: passwordText
+        if (emailText === '') {
+            console.log('Email is required');
+            setRequiredFieldEmpty({ ...requiredFieldEmpty, email: true });
+            return;
         }
-        const response = await api.request('users/login', 'POST', body, false);
-        if (response.status !== 200) {
-            console.log('Login failed: ' + response.data.error);
+        if (passwordText === '') {
+            console.log('Password is required');
+            setRequiredFieldEmpty({ ...requiredFieldEmpty, password: true });
+            return;
+        }
+
+        if (!await users.login(emailText, passwordText)) {
+            console.log('Login failed');
             setLoginFailed(true);
             return;
         }
         console.log('Login successful');
-
-        await auth.login(response.data.id, response.data.accessToken, response.data.refreshToken, response.data.isAccountVerified);
         await AsyncStorage.setItem('loginTime', new Date().getTime().toString());
-
-        if (!response.data.isAccountVerified) {
-            console.log('Account not verified');
-            navigation.navigate('verify' as never);
-        } else {
-            console.log('Account verified');
-            navigation.navigate('(tabs)' as never);
-        }
+        goToApp();
     }
 
     function handleForgotPassword() {
@@ -53,7 +53,7 @@ export default function LoginPage() {
     }
 
     function handleSignUp() {
-        navigation.navigate('signup' as never);
+        navigation.reset({ index: 1, routes: [{ name: 'landing' as never }, { name: 'signup' as never }] });
     }
 
     return (
@@ -80,12 +80,14 @@ export default function LoginPage() {
                         keyboardType="email-address"
                         autoCapitalize="none"
                         style={styles.input} />
+                    <Text style={styles.requiredField}>{requiredFieldEmpty.email ? 'This field is required.' : ''}</Text>
                     <InputField
                         variant="primary"
                         onChangeText={passwordText => setPasswordText(passwordText)}
                         placeholder="Password"
                         style={styles.input}
                         secureTextEntry />
+                    <Text style={styles.requiredField}>{requiredFieldEmpty.password ? 'This field is required.' : ''}</Text>
                     <TouchableOpacity onPress={handleForgotPassword}>
                         <Text style={{ color: '#fff', alignSelf: 'flex-end', fontFamily: 'Poppins-Regular' }}>Forgot Password?</Text>
                     </TouchableOpacity>
@@ -137,4 +139,10 @@ const styles = StyleSheet.create({
         marginBottom: 30,
         minWidth: 300
     },
+    requiredField: {
+        color: '#ffdb4f',
+        marginTop: -20,
+        fontFamily: 'Poppins-Light',
+        alignSelf: 'flex-end'
+    }
 });

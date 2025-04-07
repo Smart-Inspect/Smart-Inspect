@@ -223,7 +223,7 @@ const userService = {
 	async view({ id }: ViewParams, req: Request, res: Response): Promise<IUser | null> {
 		try {
 			// Check if the user has the required permissions
-			if (id !== req.user?.id && !req.user?.permissions.includes(permissions.MANAGER)) {
+			if (!req.user?.permissions.includes(permissions.MANAGER) && id !== req.user?.id) {
 				res.status(403).json({ error: 'Permission denied' });
 				return null;
 			}
@@ -243,12 +243,12 @@ const userService = {
 	async edit({ id, email, oldPassword, newPassword, firstName, lastName, permissionLevel }: EditParams, req: Request, res: Response): Promise<IUser | null> {
 		try {
 			// Check if the user has the required permissions
-			if (id !== req.user?.id && !req.user?.permissions.includes(permissions.MANAGER)) {
+			if (!req.user?.permissions.includes(permissions.MANAGER) && id !== req.user?.id) {
 				res.status(403).json({ error: 'Permission denied' });
 				return null;
 			}
 			// Check if the user if trying to change their own permissions while not being a MANAGER
-			if (permissionLevel && !req.user?.permissions.includes(permissions.MANAGER)) {
+			if (!req.user?.permissions.includes(permissions.MANAGER) && permissionLevel) {
 				res.status(403).json({ error: 'Permission denied' });
 				return null;
 			}
@@ -300,7 +300,7 @@ const userService = {
 	async delete({ id }: DeleteParams, req: Request, res: Response): Promise<boolean> {
 		try {
 			// Check if the user has the required permissions
-			if (id !== req.user?.id && !req.user?.permissions.includes(permissions.MANAGER)) {
+			if (!req.user?.permissions.includes(permissions.MANAGER) && id !== req.user?.id) {
 				res.status(403).json({ error: 'Permission denied' });
 				return false;
 			}

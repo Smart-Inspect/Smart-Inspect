@@ -98,7 +98,7 @@ const projectService = {
 				res.status(404).json({ error: 'Project not found' });
 				return null;
 			}
-			if (!(existingProject.engineers as IUser[]).map(engineer => engineer._id).includes(req.user?._id) && !req.user?.permissions.includes(permissions.MANAGER)) {
+			if (!req.user?.permissions.includes(permissions.MANAGER) && !(existingProject.engineers as IUser[]).map(engineer => (engineer._id as string).toString()).includes(req.user?.id)) {
 				res.status(403).json({ error: 'Permission denied' });
 				return null;
 			}
@@ -118,7 +118,7 @@ const projectService = {
 				return null;
 			}
 			// Get the projects assigned to the engineer
-			const projects = await Project.find({ engineers: engineerId }).populate('building').exec();
+			const projects = await Project.find({ engineers: engineerId, status: 'started' }).populate('building').exec();
 			return projects;
 		} catch (error) {
 			console.error(`Failed to get projects assigned to engineer ${engineerId}:`, error);

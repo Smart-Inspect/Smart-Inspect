@@ -1,9 +1,11 @@
-import { APIProvider, useAPI } from "@/context/APIContext";
-import { AuthProvider, useAuth } from "@/context/AuthContext";
+import { APIProvider } from "@/context/APIContext";
+import { AuthProvider } from "@/context/AuthContext";
 import { ColorProvider } from '@/context/ColorContext';
+import { RequestsProvider } from "@/context/RequestsContext";
 import { useFonts } from "expo-font";
-import { Stack, useNavigation } from "expo-router";
+import { Stack } from "expo-router";
 import { useEffect } from "react";
+import storage from '@/utils/storage';
 
 export default function RootLayout() {
   const [loaded] = useFonts({
@@ -21,51 +23,21 @@ export default function RootLayout() {
   return (
     <AuthProvider>
       <APIProvider>
-        <ColorProvider>
-          <MainLayout />
-        </ColorProvider>
+        <RequestsProvider>
+          <ColorProvider>
+            <UnprotectedLayout />
+          </ColorProvider>
+        </RequestsProvider>
       </APIProvider>
     </AuthProvider>
   );
 }
 
-function MainLayout() {
-  const { isAuthenticated, isVerified, id } = useAuth();
-  const navigation = useNavigation();
-  const api = useAPI();
-
-  const checkConnected = async () => {
-    try {
-      const response = await api.request('', 'GET', null, false);
-      if (response.status === 200) {
-        console.log('Connected to server');
-      }
-      else {
-        console.log('Failed to connect to server: ' + response.data.error);
-      }
-    } catch (error) {
-      console.error('Error fetching server status:', error);
-    }
-  };
-
+function UnprotectedLayout() {
   /*useEffect(() => {
-        storage.clearAllStorage();
-        storage.checkStorage();
-    }, []);*/
-
-  useEffect(() => {
-    checkConnected();
-  }, []);
-
-  useEffect(() => {
-    if (!isAuthenticated || !isVerified) {
-      console.log(`Authenticated = ${isAuthenticated}, Verified = ${isVerified}, redirecting to landing page`);
-      navigation.navigate('landing' as never);
-    } else {
-      console.log(`Authenticated = ${isAuthenticated}, Verified = ${isVerified}, redirecting to tabs`);
-      navigation.navigate('(tabs)' as never);
-    }
-  }, [isAuthenticated, isVerified]);
+    storage.clearAllStorage();
+    storage.checkStorage();
+  }, []);*/
 
   return (
     <Stack>
@@ -75,6 +47,7 @@ function MainLayout() {
       <Stack.Screen name="signup" options={{ headerShown: false }} />
       <Stack.Screen name="forgotpassword" options={{ headerShown: false }} />
       <Stack.Screen name="verify" options={{ headerShown: false }} />
+      <Stack.Screen name="invalidpermission" options={{ headerShown: false }} />
     </Stack>
   );
 }
