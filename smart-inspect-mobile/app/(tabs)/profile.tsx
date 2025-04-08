@@ -3,7 +3,7 @@ import Popup from '@/components/Popup';
 import { useAuth } from '@/context/AuthContext';
 import { ColorTypes, useColor } from '@/context/ColorContext';
 import React, { useCallback, useEffect, useState } from 'react';
-import { Text, View, StyleSheet, ScrollView, Alert } from 'react-native';
+import { Text, View, StyleSheet, ScrollView, Alert, RefreshControl } from 'react-native';
 import { useRequests } from '@/context/RequestsContext';
 import { IUser } from '@/utils/types';
 import InputField from '@/components/InputField';
@@ -29,6 +29,15 @@ export default function ProfileScreen({ user }: ProfileScreenProps) {
     const [mustSetOldPassword, setMustSetOldPassword] = useState(false);
     const [passwordsDoNotMatch, setPasswordsDoNotMatch] = useState(false);
     const [requiredFieldEmpty, setRequiredFieldEmpty] = useState({ firstName: false, lastName: false, email: false, newPassword: false, confirmNewPassword: false });
+    const [refreshing, setRefreshing] = React.useState(false);
+
+    const onRefresh = React.useCallback(() => {
+        const controller = new AbortController();
+        fetchProfileInfo(controller);
+        return () => {
+            controller.abort();
+        }
+    }, []);
 
     const openEditMode = () => {
         setOldPassword(undefined);
@@ -155,7 +164,10 @@ export default function ProfileScreen({ user }: ProfileScreenProps) {
 
     return (
         <View style={styles.background}>
-            <ScrollView>
+            <ScrollView
+                refreshControl={
+                    <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+                }>
                 { /* Logout Popup */}
                 <Popup animationType="none" transparent={true} visible={logoutPopupVisible} onRequestClose={() => closePopup('logout')}>
                     <View style={{ width: 300 }}>

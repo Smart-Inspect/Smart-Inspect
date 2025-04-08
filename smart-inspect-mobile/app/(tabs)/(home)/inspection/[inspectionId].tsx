@@ -4,7 +4,7 @@ import { useRequests } from '@/context/RequestsContext';
 import { IProject, IUnit } from '@/utils/types';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
-import { Text, View, StyleSheet, ScrollView } from 'react-native';
+import { Text, View, StyleSheet, ScrollView, RefreshControl } from 'react-native';
 
 export default function InspectionScreen() {
     const color = useColor();
@@ -16,6 +16,15 @@ export default function InspectionScreen() {
     const [inspectionDate, setInspectionDate] = useState<string>('Needs Inspection');
     const [project, setProject] = useState<IProject>();
     const [status, setStatus] = useState<'completed' | 'started' | 'not-started'>();
+    const [refreshing, setRefreshing] = React.useState(false);
+
+    const onRefresh = React.useCallback(() => {
+        const controller = new AbortController();
+        fetchInspectionInfo(controller);
+        return () => {
+            controller.abort();
+        }
+    }, []);
 
     const fetchInspectionInfo = useCallback(async (abort?: AbortController) => {
         if (!inspectionId) {
@@ -61,7 +70,10 @@ export default function InspectionScreen() {
 
     return (
         <View style={styles.background}>
-            <ScrollView>
+            <ScrollView
+                refreshControl={
+                    <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+                }>
                 { /* Page Content */}
                 <View style={styles.topView}>
                     { /* Inspection Info */}

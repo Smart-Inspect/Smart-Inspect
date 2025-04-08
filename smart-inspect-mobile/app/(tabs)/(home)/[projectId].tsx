@@ -4,7 +4,7 @@ import { useRequests } from '@/context/RequestsContext';
 import { IBuilding, IInspection } from '@/utils/types';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
-import { Text, View, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { Text, View, StyleSheet, ScrollView, TouchableOpacity, RefreshControl } from 'react-native';
 
 export default function ProjectScreen() {
     const color = useColor();
@@ -18,6 +18,16 @@ export default function ProjectScreen() {
     const [assignedInspections, setAssignedInspections] = useState<IInspection[]>([]);
     const [filteredInspections, setFilteredInspections] = useState<IInspection[]>([]);
     const [searchQuery, setSearchQuery] = useState('');
+    const [refreshing, setRefreshing] = React.useState(false);
+
+    const onRefresh = React.useCallback(() => {
+        const controller = new AbortController();
+        viewProject(controller);
+        viewAssignedInspections(controller);
+        return () => {
+            controller.abort();
+        }
+    }, []);
 
     const handleSearch = (query: string) => {
         setSearchQuery(query);
@@ -77,7 +87,10 @@ export default function ProjectScreen() {
 
     return (
         <View style={styles.background}>
-            <ScrollView>
+            <ScrollView
+                refreshControl={
+                    <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+                }>
                 { /* Page Content */}
                 <View style={styles.topView}>
                     { /* Project Info */}

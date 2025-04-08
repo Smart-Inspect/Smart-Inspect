@@ -1,6 +1,6 @@
 import { ColorTypes, useColor } from '@/context/ColorContext';
 import React, { useCallback, useEffect, useState } from 'react';
-import { Text, View, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { Text, View, StyleSheet, ScrollView, RefreshControl, TouchableOpacity } from 'react-native';
 import { IProject, IUser } from '@/utils/types';
 import InputField from '@/components/InputField';
 import { useRouter } from 'expo-router';
@@ -17,6 +17,17 @@ export default function HomeScreen() {
     const [assignedProjects, setAssignedProjects] = useState<IProject[]>([]);
     const [filteredProjects, setFilteredProjects] = useState<IProject[]>([]);
     const [searchQuery, setSearchQuery] = useState('');
+    const [refreshing, setRefreshing] = React.useState(false);
+
+    const onRefresh = React.useCallback(() => {
+        const controller = new AbortController();
+        fetchProjectInfo(controller);
+        fetchProfileInfo(controller);
+        return () => {
+            controller.abort();
+        }
+    }, []);
+
 
     const handleSearch = (query: string) => {
         setSearchQuery(query);
@@ -68,7 +79,10 @@ export default function HomeScreen() {
 
     return (
         <View style={styles.background}>
-            <ScrollView>
+            <ScrollView
+                refreshControl={
+                    <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+                }>
                 { /* Page Content */}
                 <View style={styles.topView}>
                     { /* Projects List */}
