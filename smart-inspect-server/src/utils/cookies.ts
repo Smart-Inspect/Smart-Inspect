@@ -1,7 +1,6 @@
 import type { Response } from 'express';
 
 const cookies = {
-	// TODO: MAKE SURE THIS COOKIE WORKS
 	setRefreshCookie: (res: Response, refreshToken: string) => {
 		res.cookie('refreshToken', refreshToken, {
 			httpOnly: true,

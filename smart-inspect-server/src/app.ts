@@ -7,6 +7,7 @@ dotenv.config({
 import express, { Request, Response } from 'express';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
+import path from 'path';
 import database from './config/db';
 import mail from './config/mail';
 import authRoute from './routes/authRoute';
@@ -24,7 +25,6 @@ async function main() {
 	app.use(express.json());
 	app.use(cookieParser());
 	// Set up CORS for development
-	// TODO: FIX CORS FOR PRODUCTION OR REMOVE IT
 	if (BUILD_TYPE === 'development') {
 		console.log('[APP] Setting up CORS for development');
 		app.use(
@@ -60,6 +60,14 @@ async function main() {
 	app.use('/api/projects', projectsRoute);
 	app.use('/api/inspections', inspectionsRoute);
 	app.use('/api/units', unitsRoute);
+
+	// Serve static files from React web in production
+	//if (process.env.NODE_ENV === 'production') {
+	app.use(express.static(path.join(__dirname, 'web')));
+	app.get('*', (req, res) => {
+		res.sendFile(path.join(__dirname, 'web', 'index.html'));
+	});
+	//}
 
 	app.listen(PORT, '0.0.0.0', () => {
 		console.log(`[APP] Server is running on http://localhost:${PORT}`);
