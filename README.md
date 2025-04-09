@@ -1,4 +1,4 @@
 # Smart-Inspect
 Project for Senior Design. Client is Karins Engineering.
 
-[Here](https://pruittelizabethmarie.atlassian.net/jira/software/projects/SMART/boards/1/backlog) is the link to out team's Jira Backlog.
+[Here](https://www.scrumwise.com/scrum/#/sprints/project/smart-inspect/id-186782-23098-21) is the link to out team's Scrumwise Backlog.
