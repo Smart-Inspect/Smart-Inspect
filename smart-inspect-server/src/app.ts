@@ -62,12 +62,12 @@ async function main() {
 	app.use('/api/units', unitsRoute);
 
 	// Serve static files from React web in production
-	//if (process.env.NODE_ENV === 'production') {
-	app.use(express.static(path.join(__dirname, 'web')));
-	app.get('*', (req, res) => {
-		res.sendFile(path.join(__dirname, 'web', 'index.html'));
-	});
-	//}
+	if (process.env.NODE_ENV === 'production') {
+		app.use(express.static(path.join(__dirname, 'web')));
+		app.get('*', (req, res) => {
+			res.sendFile(path.join(__dirname, 'web', 'index.html'));
+		});
+	}
 
 	app.listen(PORT, '0.0.0.0', () => {
 		console.log(`[APP] Server is running on http://localhost:${PORT}`);
