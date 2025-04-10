@@ -1,20 +1,31 @@
-FROM node:23-slim
+FROM node:23-slim AS frontend-builder
+
+WORKDIR /usr/src/frontend
+
+COPY ./smart-inspect-web/package*.json ./
+RUN npm install
+COPY ./smart-inspect-web ./
+RUN npm run build
+
+
+FROM node:23-slim AS backend-builder
+
+WORKDIR /usr/src/backend
+
+COPY ./smart-inspect-server/package*.json ./
+RUN npm install
+COPY ./smart-inspect-server ./
+RUN npm run build
+
+FROM node:23-slim AS production
 
 WORKDIR /usr/src/app
 
-COPY ./smart-inspect-server/* .
+# Copy backend and built frontend
+COPY --from=backend-builder /usr/src/backend ./
+COPY --from=frontend-builder /usr/src/frontend/build ./dist/web
 RUN npm install
-RUN npm run build
 
-WORKDIR /usr/src/app/smart-inspect-web
-COPY ./smart-inspect-web/* .
-RUN npm install
-RUN npm run build
-
-WORKDIR /usr/src/app
-RUN cp -r ./smart-inspect-web/build ./dist
-RUN mv ./dist/build ./dist/web
-
-EXPOSE 3000 8080
+EXPOSE 3000
 
 CMD ["npm", "start"]
