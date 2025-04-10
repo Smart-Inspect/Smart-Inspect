@@ -6,12 +6,14 @@ COPY ./smart-inspect-server/* .
 RUN npm install
 RUN npm run build
 
-COPY ./smart-inspect-web/* ./smart-inspect-web/
-RUN npm install --prefix ./smart-inspect-web/
-RUN npm run build --prefix ./smart-inspect-web/
+WORKDIR /usr/src/app/smart-inspect-web
+COPY ./smart-inspect-web/* .
+RUN npm install
+RUN npm run build
+
+WORKDIR /usr/src/app
 RUN cp -r ./smart-inspect-web/build ./dist
 RUN mv ./dist/build ./dist/web
-RUN rm -rf ./smart-inspect-web
 
 EXPOSE 3000 8080
 
